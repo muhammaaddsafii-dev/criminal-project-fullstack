@@ -76,8 +76,8 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
           {/* Left Column - Hotspot & Recent Incidents */}
           <div
-            className="lg:col-span-3 grid grid-rows-2 gap-4"
-            style={{ height: "600px" }}
+            className="lg:col-span-2 grid grid-rows-2 gap-4"
+            style={{ height: "750px" }}
           >
             <div className="row-span-1 overflow-hidden">
               <HotspotCard hotspots={overallStats.hotspots} />
@@ -87,8 +87,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Center Column - Map */}
-          <div className="lg:col-span-6" style={{ height: "600px" }}>
+          {/* Center Column - Map (DIPERBESAR) */}
+          <div className="lg:col-span-8" style={{ height: "750px" }}>
             <div className="bg-white rounded-xl shadow-sm p-4 h-full">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -115,8 +115,8 @@ export default function Home() {
 
           {/* Right Column - District Chart & Top Crime Types */}
           <div
-            className="lg:col-span-3 grid grid-rows-2 gap-4"
-            style={{ height: "600px" }}
+            className="lg:col-span-2 grid grid-rows-2 gap-4"
+            style={{ height: "750px" }}
           >
             <div className="row-span-1 overflow-hidden">
               <DistrictCrimeChart data={overallStats.districtData} />

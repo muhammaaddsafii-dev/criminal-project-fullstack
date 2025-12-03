@@ -70,7 +70,13 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
   selectedRegion,
 }) => {
   const [hoveredRegion, setHoveredRegion] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
   const geoJsonRef = useRef<any>(null);
+
+  // Wait for component to mount before rendering map
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const style = (feature: any) => {
     const isSelected = selectedRegion?.properties?.id === feature.properties.id;
@@ -122,6 +128,15 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
     });
   };
 
+  // Show loading state until mounted
+  if (!isMounted) {
+    return (
+      <div className="w-full h-full bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center">
+        <p className="text-slate-500 dark:text-slate-400">Memuat peta...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-full rounded-xl overflow-hidden shadow-lg">
       <MapContainer
@@ -130,6 +145,7 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
         className="w-full h-full"
         zoomControl={true}
         style={{ background: "#e2e8f0" }}
+        key="map-container"
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -140,6 +156,7 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
           data={geoJsonData}
           style={style}
           onEachFeature={onEachFeature}
+          key={`geojson-${selectedRegion?.properties?.id || "default"}`}
         />
         <Legend />
       </MapContainer>
