@@ -6,9 +6,7 @@ import HotspotCard from "@/components/HotspotCard";
 import RecentIncidents from "@/components/RecentIncidents";
 import TopCrimeTypes from "@/components/TopCrimeTypes";
 import DistrictCrimeChart from "@/components/DistrictCrimeChart";
-// HAPUS baris ini:
-// import CrimeMap from "@/components/CrimeMap";
-import RegionModal from "../components/RegionModal";
+import RegionModal from "@/components/RegionModal";
 import CrimeTable from "@/components/CrimeTable";
 import {
   geoJsonData,
@@ -17,21 +15,19 @@ import {
   crimeTableData,
 } from "@/data/mockData";
 import { MapPin, Shield } from "lucide-react";
-
-// TAMBAHKAN baris ini untuk dynamic import
 import dynamic from "next/dynamic";
 
 const CrimeMap = dynamic(() => import("@/components/CrimeMap"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[500px] bg-gray-100 rounded-lg flex items-center justify-center">
+    <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
       <p className="text-gray-500">Memuat peta...</p>
     </div>
   ),
 });
 
 export default function Home() {
-  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleRegionClick = (region: any) => {
@@ -44,71 +40,123 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8" />
-            <div>
-              <h1 className="text-3xl font-bold">Sistem Informasi Kriminalitas</h1>
-              <p className="text-blue-100 text-sm mt-1">
-                Dashboard Monitoring & Analisis Data Kriminalitas Jakarta
-              </p>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-[1000]">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="p-2 bg-slate-900 rounded-lg flex-shrink-0">
+                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-lg font-bold text-slate-800 truncate">
+                  CrimeWatch Jakarta
+                </h1>
+                <p className="text-xs text-slate-500 hidden sm:block">
+                  Sistem Visualisasi Kriminalitas
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500 flex-shrink-0">
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">DKI Jakarta, Indonesia</span>
+              <span className="sm:hidden">Jakarta</span>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-6">
         {/* Stats Cards */}
         <StatCards stats={overallStats} />
 
-        {/* Map and Hotspots */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <MapPin className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Peta Kriminalitas
-                </h2>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                Klik pada wilayah untuk melihat detail statistik
-              </p>
-              <CrimeMap stats={overallStats} />
+        {/* Dashboard Grid Layout - 3 Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+          {/* Left Column - Hotspot & Recent Incidents */}
+          <div
+            className="lg:col-span-3 grid grid-rows-2 gap-4"
+            style={{ height: "600px" }}
+          >
+            <div className="row-span-1 overflow-hidden">
+              <HotspotCard hotspots={overallStats.hotspots} />
+            </div>
+            <div className="row-span-1 overflow-hidden">
+              <RecentIncidents incidents={overallStats.recentIncidents} />
             </div>
           </div>
-          <div>
-            <HotspotCard hotspots={overallStats.hotspots} />
+
+          {/* Center Column - Map */}
+          <div className="lg:col-span-6" style={{ height: "600px" }}>
+            <div className="bg-white rounded-xl shadow-sm p-4 h-full">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-800">
+                    Peta Kriminalitas
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    Klik pada wilayah untuk melihat detail statistik
+                  </p>
+                </div>
+              </div>
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ height: "calc(100% - 60px)" }}
+              >
+                <CrimeMap
+                  geoJsonData={geoJsonData}
+                  onRegionClick={handleRegionClick}
+                  selectedRegion={selectedRegion}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - District Chart & Top Crime Types */}
+          <div
+            className="lg:col-span-3 grid grid-rows-2 gap-4"
+            style={{ height: "600px" }}
+          >
+            <div className="row-span-1 overflow-hidden">
+              <DistrictCrimeChart data={overallStats.districtData} />
+            </div>
+            <div className="row-span-1 overflow-hidden">
+              <TopCrimeTypes crimeTypes={overallStats.topCrimeTypes} />
+            </div>
           </div>
         </div>
 
-        {/* Charts and Recent Incidents */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <DistrictCrimeChart data={overallStats.districtData} />
-          <TopCrimeTypes data={overallStats.topCrimeTypes} />
-        </div>
-
-        <div className="mb-8">
-          <RecentIncidents incidents={overallStats.recentIncidents} />
-        </div>
-
-        {/* Crime Table */}
+        {/* Data Table - Full Width Below Map */}
         <CrimeTable data={crimeTableData} />
       </main>
 
-      {/* Modal */}
-      {selectedRegion && (
-        <RegionModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          region={selectedRegion}
-          stats={crimeStatsByDistrict[selectedRegion.id]}
-        />
-      )}
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-200 mt-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <Shield className="w-4 h-4" />
+              <span>CrimeWatch Jakarta - Data Dummy untuk Demonstrasi</span>
+            </div>
+            <p className="text-sm text-slate-400">
+              © 2025 Sistem Visualisasi Kriminalitas
+            </p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Region Detail Modal */}
+      <RegionModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        regionData={selectedRegion}
+        crimeStats={
+          selectedRegion
+            ? crimeStatsByDistrict[selectedRegion.properties.id]
+            : null
+        }
+      />
     </div>
   );
 }

@@ -2,8 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Flame, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { MapPin, TrendingUp, TrendingDown, Minus, Flame } from "lucide-react";
 
 interface Hotspot {
   area: string;
@@ -19,55 +18,57 @@ const HotspotCard: React.FC<HotspotCardProps> = ({ hotspots }) => {
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case "up":
-        return <TrendingUp className="h-4 w-4" />;
+        return <TrendingUp className="w-3.5 h-3.5 text-red-500" />;
       case "down":
-        return <TrendingDown className="h-4 w-4" />;
+        return <TrendingDown className="w-3.5 h-3.5 text-emerald-500" />;
       default:
-        return <Minus className="h-4 w-4" />;
+        return <Minus className="w-3.5 h-3.5 text-slate-400" />;
     }
   };
 
-  const getTrendColor = (trend: string) => {
-    switch (trend) {
-      case "up":
-        return "bg-red-100 text-red-700";
-      case "down":
-        return "bg-emerald-100 text-emerald-700";
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
+  const getRankColor = (index: number) => {
+    if (index === 0) return "bg-red-500 text-white";
+    if (index === 1) return "bg-orange-500 text-white";
+    if (index === 2) return "bg-amber-500 text-white";
+    return "bg-slate-200 text-slate-600";
   };
 
   return (
-    <Card className="border-slate-200 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50 border-b border-slate-200">
-        <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
-          <Flame className="mr-2 h-5 w-5 text-orange-600" />
-          Hotspot Area
+    <Card className="border-0 shadow-sm bg-white h-full flex flex-col">
+      <CardHeader className="pb-3 px-4 pt-4 flex-shrink-0">
+        <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <Flame className="w-4 h-4 text-orange-500" />
+          Hotspot Kriminalitas
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          {hotspots.map((hotspot, index) => (
+      <CardContent className="flex-1 overflow-auto px-4 pb-4 pt-2">
+        <div className="space-y-2.5">
+          {hotspots.map((spot, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+              className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors"
             >
-              <div className="flex-1">
-                <h3 className="font-semibold text-slate-800">
-                  {hotspot.area}
-                </h3>
-                <p className="text-sm text-slate-600 mt-1">
-                  {hotspot.cases} kasus
-                </p>
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <span
+                  className={`w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${getRankColor(
+                    index
+                  )}`}
+                >
+                  {index + 1}
+                </span>
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                  <span className="text-sm font-medium text-slate-700 truncate">
+                    {spot.area}
+                  </span>
+                </div>
               </div>
-              <Badge
-                variant="secondary"
-                className={`${getTrendColor(hotspot.trend)} flex items-center gap-1`}
-              >
-                {getTrendIcon(hotspot.trend)}
-                <span className="capitalize">{hotspot.trend}</span>
-              </Badge>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-sm font-semibold text-slate-800">
+                  {spot.cases}
+                </span>
+                {getTrendIcon(spot.trend)}
+              </div>
             </div>
           ))}
         </div>

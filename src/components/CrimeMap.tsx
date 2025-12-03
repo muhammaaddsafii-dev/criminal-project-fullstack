@@ -1,20 +1,14 @@
 "use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 interface CrimeMapProps {
-  stats: {
-    totalCases: number;
-    solvedCases: number;
-    pendingCases: number;
-    clearanceRate: number;
-    districtData: { name: string; total: number }[];
-    topCrimeTypes: { type: string; count: number; percentage: number }[];
-    hotspots: { area: string; cases: number; trend: string }[];
-    recentIncidents: any[];
-  };
+  geoJsonData: any;
+  onRegionClick: (region: any) => void;
+  selectedRegion: any;
 }
 
 // Fix for default marker icons
@@ -34,30 +28,31 @@ const Legend = () => {
   const map = useMap();
 
   useEffect(() => {
-    const legend = new (L.Control.extend({
-      options: { position: "bottomright" },
-      onAdd: function () {
-        const div = L.DomUtil.create("div", "legend");
-        div.innerHTML = `
-          <div style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">Tingkat Kriminalitas</h4>
-            <div style="display: flex; align-items: center; margin-bottom: 4px;">
-              <span style="width: 20px; height: 20px; background: #ef4444; display: inline-block; margin-right: 8px; border-radius: 3px;"></span>
-              <span style="font-size: 12px;">Tinggi</span>
+    const legend = L.control({ position: "bottomright" });
+
+    legend.onAdd = () => {
+      const div = L.DomUtil.create("div", "legend");
+      div.innerHTML = `
+        <div style="background: white; padding: 12px 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-family: system-ui, sans-serif;">
+          <div style="font-weight: 600; font-size: 12px; color: #334155; margin-bottom: 8px;">Tingkat Kriminalitas</div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="width: 16px; height: 16px; background: #ef4444; border-radius: 4px; display: inline-block;"></span>
+              <span style="font-size: 11px; color: #64748b;">Tinggi</span>
             </div>
-            <div style="display: flex; align-items: center; margin-bottom: 4px;">
-              <span style="width: 20px; height: 20px; background: #f59e0b; display: inline-block; margin-right: 8px; border-radius: 3px;"></span>
-              <span style="font-size: 12px;">Sedang</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="width: 16px; height: 16px; background: #f59e0b; border-radius: 4px; display: inline-block;"></span>
+              <span style="font-size: 11px; color: #64748b;">Sedang</span>
             </div>
-            <div style="display: flex; align-items: center;">
-              <span style="width: 20px; height: 20px; background: #22c55e; display: inline-block; margin-right: 8px; border-radius: 3px;"></span>
-              <span style="font-size: 12px;">Rendah</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="width: 16px; height: 16px; background: #22c55e; border-radius: 4px; display: inline-block;"></span>
+              <span style="font-size: 11px; color: #64748b;">Rendah</span>
             </div>
           </div>
-        `;
-        return div;
-      },
-    }))();
+        </div>
+      `;
+      return div;
+    };
 
     legend.addTo(map);
 
@@ -69,68 +64,80 @@ const Legend = () => {
   return null;
 };
 
-const CrimeMap: React.FC<CrimeMapProps> = ({ stats }) => {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+const CrimeMap: React.FC<CrimeMapProps> = ({
+  geoJsonData,
+  onRegionClick,
+  selectedRegion,
+}) => {
+  const [hoveredRegion, setHoveredRegion] = useState<any>(null);
+  const geoJsonRef = useRef<any>(null);
 
   const style = (feature: any) => {
+    const isSelected = selectedRegion?.properties?.id === feature.properties.id;
+    const isHovered = hoveredRegion?.properties?.id === feature.properties.id;
+
     return {
       fillColor: feature.properties.color,
-      weight: 2,
+      weight: isSelected ? 3 : isHovered ? 2 : 1,
       opacity: 1,
-      color: "white",
-      fillOpacity: 0.7,
+      color: isSelected ? "#1e293b" : isHovered ? "#475569" : "#94a3b8",
+      fillOpacity: isSelected ? 0.8 : isHovered ? 0.7 : 0.5,
     };
   };
 
   const onEachFeature = (feature: any, layer: any) => {
-    const { name, crimeCount, crimeRate } = feature.properties;
-    layer.bindPopup(`
-      <div style="font-family: sans-serif;">
-        <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">${name}</h3>
-        <p style="margin: 4px 0;"><strong>Jumlah Kasus:</strong> ${crimeCount}</p>
-        <p style="margin: 4px 0;"><strong>Tingkat:</strong> ${crimeRate}</p>
-      </div>
-    `);
-
     layer.on({
-      mouseover: (e: any) => {
-        e.target.setStyle({
-          fillOpacity: 0.9,
-        });
+      click: (e: any) => {
+        L.DomEvent.stopPropagation(e);
+        onRegionClick(feature);
       },
-      mouseout: (e: any) => {
-        e.target.setStyle({
+      mouseover: (e: any) => {
+        setHoveredRegion(feature);
+        const layer = e.target;
+        layer.setStyle({
+          weight: 2,
+          color: "#475569",
           fillOpacity: 0.7,
         });
+
+        // Show tooltip
+        layer
+          .bindTooltip(
+            `<div style="padding: 8px 12px; font-family: system-ui, sans-serif;">
+            <div style="font-weight: 600; font-size: 13px; color: #1e293b;">${feature.properties.name}</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Kasus: ${feature.properties.crimeCount}</div>
+            <div style="font-size: 11px; color: ${feature.properties.color}; margin-top: 2px;">Tingkat: ${feature.properties.crimeRate}</div>
+          </div>`,
+            { sticky: true, className: "custom-tooltip" }
+          )
+          .openTooltip();
+      },
+      mouseout: (e: any) => {
+        setHoveredRegion(null);
+        if (geoJsonRef.current) {
+          geoJsonRef.current.resetStyle(e.target);
+        }
+        layer.closeTooltip();
       },
     });
   };
 
-  if (!isMounted) {
-    return (
-      <div className="w-full h-[500px] bg-gray-100 rounded-lg flex items-center justify-center">
-        <p className="text-gray-500">Loading map...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full h-[500px] rounded-lg overflow-hidden border border-gray-200">
+    <div className="relative w-full h-full rounded-xl overflow-hidden shadow-lg">
       <MapContainer
-        center={[-6.2088, 106.8456]}
+        center={[-6.2, 106.85]}
         zoom={11}
-        style={{ height: "100%", width: "100%" }}
+        className="w-full h-full"
+        zoomControl={true}
+        style={{ background: "#e2e8f0" }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <GeoJSON
-          data={require("@/data/mockData").geoJsonData as any}
+          ref={geoJsonRef}
+          data={geoJsonData}
           style={style}
           onEachFeature={onEachFeature}
         />

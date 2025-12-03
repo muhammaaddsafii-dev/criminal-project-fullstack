@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin } from "lucide-react";
+import { Bell, MapPin, Calendar } from "lucide-react";
 
 interface Incident {
   id: number;
@@ -19,65 +19,84 @@ interface RecentIncidentsProps {
 }
 
 const RecentIncidents: React.FC<RecentIncidentsProps> = ({ incidents }) => {
-  const getSeverityColor = (severity: string) => {
+  const getSeverityStyle = (severity: string) => {
     switch (severity) {
       case "high":
-        return "bg-red-100 text-red-700";
+        return "bg-red-100 text-red-700 border-red-200";
       case "medium":
-        return "bg-amber-100 text-amber-700";
+        return "bg-amber-100 text-amber-700 border-amber-200";
       default:
-        return "bg-blue-100 text-blue-700";
+        return "bg-slate-100 text-slate-700 border-slate-200";
     }
   };
 
-  const getSeverityText = (severity: string) => {
-    switch (severity) {
-      case "high":
-        return "Tinggi";
-      case "medium":
-        return "Sedang";
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "Pencurian":
+        return "bg-blue-100 text-blue-700";
+      case "Perampokan":
+        return "bg-red-100 text-red-700";
+      case "Penipuan":
+        return "bg-purple-100 text-purple-700";
+      case "Kekerasan":
+        return "bg-orange-100 text-orange-700";
       default:
-        return "Rendah";
+        return "bg-slate-100 text-slate-700";
     }
   };
 
   return (
-    <Card className="border-slate-200 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200">
-        <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
-          <Clock className="mr-2 h-5 w-5 text-blue-600" />
+    <Card className="border-0 shadow-sm bg-white h-full flex flex-col">
+      <CardHeader className="pb-3 px-4 pt-4 flex-shrink-0">
+        <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <Bell className="w-4 h-4 text-amber-500" />
           Insiden Terbaru
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="space-y-4">
+      <CardContent className="flex-1 overflow-auto px-4 pb-4 pt-2">
+        <div className="space-y-2.5">
           {incidents.map((incident) => (
             <div
               key={incident.id}
-              className="p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors border border-slate-100"
+              className="p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all"
             >
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-slate-800">
+              {/* Header with Title and Severity */}
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h4 className="text-sm font-medium text-slate-800 leading-tight flex-1 line-clamp-2">
                   {incident.title}
-                </h3>
+                </h4>
                 <Badge
-                  variant="secondary"
-                  className={`${getSeverityColor(incident.severity)} ml-2`}
+                  className={`text-xs px-2 py-0.5 whitespace-nowrap flex-shrink-0 ${getSeverityStyle(
+                    incident.severity
+                  )}`}
                 >
-                  {getSeverityText(incident.severity)}
+                  {incident.severity === "high" ? "Berat" : "Sedang"}
                 </Badge>
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center text-sm text-slate-600">
-                  <MapPin className="h-3.5 w-3.5 mr-1.5" />
-                  <span>{incident.location}</span>
+
+              {/* Type Badge */}
+              <div className="mb-2">
+                <Badge
+                  className={`text-xs px-2 py-0.5 ${getTypeColor(
+                    incident.type
+                  )}`}
+                >
+                  {incident.type}
+                </Badge>
+              </div>
+
+              {/* Location and Date Info */}
+              <div className="flex flex-col gap-1.5 text-xs text-slate-500">
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">{incident.location}</span>
                 </div>
-                <div className="flex items-center text-sm text-slate-600">
-                  <Clock className="h-3.5 w-3.5 mr-1.5" />
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>
                     {new Date(incident.date).toLocaleDateString("id-ID", {
                       day: "numeric",
-                      month: "long",
+                      month: "short",
                       year: "numeric",
                     })}
                   </span>

@@ -4,84 +4,95 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   TrendingUp,
+  TrendingDown,
+  Minus,
   AlertTriangle,
-  Users,
-  Activity,
-  MapPin,
+  Shield,
+  FileCheck,
+  Clock,
 } from "lucide-react";
 
-interface StatCard {
-  title: string;
-  value: string | number;
-  change: string;
-  trend: "up" | "down";
-  icon: React.ElementType;
-  bgColor: string;
-  color: string;
+interface OverallStats {
+  totalCases: number;
+  solvedCases: number;
+  pendingCases: number;
+  clearanceRate: number;
+  districtData: any[];
+  topCrimeTypes: any[];
+  hotspots: any[];
+  recentIncidents: any[];
 }
 
-const StatCards = () => {
-  const stats: StatCard[] = [
+interface StatCardsProps {
+  stats: OverallStats;
+}
+
+const StatCards: React.FC<StatCardsProps> = ({ stats }) => {
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case "up":
+        return <TrendingUp className="w-4 h-4 text-red-500" />;
+      case "down":
+        return <TrendingDown className="w-4 h-4 text-emerald-500" />;
+      default:
+        return <Minus className="w-4 h-4 text-slate-400" />;
+    }
+  };
+
+  const cards = [
     {
-      title: "Total Incidents",
-      value: "2,847",
-      change: "+12.5%",
-      trend: "up",
-      icon: Activity,
-      bgColor: "bg-blue-50",
-      color: "bg-blue-500",
+      title: "Total Kasus",
+      value: stats.totalCases,
+      icon: <AlertTriangle className="w-5 h-5" />,
+      color: "from-rose-500 to-rose-600",
+      textColor: "text-rose-600",
+      bgColor: "bg-rose-50",
     },
     {
-      title: "High Priority",
-      value: "156",
-      change: "+8.2%",
-      trend: "up",
-      icon: AlertTriangle,
-      bgColor: "bg-red-50",
-      color: "bg-red-500",
+      title: "Kasus Selesai",
+      value: stats.solvedCases,
+      icon: <FileCheck className="w-5 h-5" />,
+      color: "from-emerald-500 to-emerald-600",
+      textColor: "text-emerald-600",
+      bgColor: "bg-emerald-50",
     },
     {
-      title: "Active Cases",
-      value: "428",
-      change: "-3.1%",
-      trend: "down",
-      icon: Users,
-      bgColor: "bg-green-50",
-      color: "bg-green-500",
+      title: "Dalam Proses",
+      value: stats.pendingCases,
+      icon: <Clock className="w-5 h-5" />,
+      color: "from-amber-500 to-amber-600",
+      textColor: "text-amber-600",
+      bgColor: "bg-amber-50",
     },
     {
-      title: "Hotspots",
-      value: "12",
-      change: "+2",
-      trend: "up",
-      icon: MapPin,
-      bgColor: "bg-purple-50",
-      color: "bg-purple-500",
+      title: "Clearance Rate",
+      value: `${stats.clearanceRate}%`,
+      icon: <Shield className="w-5 h-5" />,
+      color: "from-sky-500 to-sky-600",
+      textColor: "text-sky-600",
+      bgColor: "bg-sky-50",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((card, index) => (
-        <Card key={index} className="hover:shadow-lg transition-shadow">
-          <CardContent className="pt-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {cards.map((card, index) => (
+        <Card
+          key={index}
+          className="border-0 shadow-sm hover:shadow-md transition-all duration-300 bg-white overflow-hidden"
+        >
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
+              <div className="flex-1">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
                   {card.title}
                 </p>
-                <h3 className="text-2xl font-bold mt-2">{card.value}</h3>
-                <p
-                  className={`text-sm mt-2 flex items-center gap-1 ${
-                    card.trend === "up" ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  {card.change} from last month
+                <p className="text-2xl font-bold text-slate-800">
+                  {card.value}
                 </p>
               </div>
-              <div className={`${card.bgColor} p-3 rounded-lg`}>
-                <card.icon className={`h-8 w-8 ${card.color.replace("bg-", "text-")}`} />
+              <div className={`p-3 rounded-xl ${card.bgColor}`}>
+                <div className={card.textColor}>{card.icon}</div>
               </div>
             </div>
           </CardContent>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3 } from "lucide-react";
+import { PieChart } from "lucide-react";
 
 interface CrimeType {
   type: string;
@@ -11,43 +11,46 @@ interface CrimeType {
 }
 
 interface TopCrimeTypesProps {
-  data: CrimeType[];
+  crimeTypes: CrimeType[];
 }
 
-const TopCrimeTypes: React.FC<TopCrimeTypesProps> = ({ data }) => {
-  const colors = [
-    "bg-blue-500",
-    "bg-purple-500",
-    "bg-red-500",
-    "bg-orange-500",
-    "bg-slate-500",
-  ];
+const TopCrimeTypes: React.FC<TopCrimeTypesProps> = ({ crimeTypes }) => {
+  const getBarColor = (index: number) => {
+    const colors = [
+      "bg-rose-500",
+      "bg-violet-500",
+      "bg-amber-500",
+      "bg-emerald-500",
+      "bg-slate-400",
+    ];
+    return colors[index] || colors[4];
+  };
 
   return (
-    <Card className="border-slate-200 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b border-slate-200">
-        <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
-          <BarChart3 className="mr-2 h-5 w-5 text-blue-600" />
+    <Card className="border-0 shadow-sm bg-white h-full flex flex-col">
+      <CardHeader className="pb-3 px-4 pt-4 flex-shrink-0">
+        <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <PieChart className="w-4 h-4 text-violet-500" />
           Jenis Kriminalitas
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          {data.map((item, index) => (
-            <div key={index}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-700">
-                  {item.type}
-                </span>
-                <span className="text-sm font-semibold text-slate-900">
-                  {item.count} ({item.percentage}%)
+      <CardContent className="flex-1 overflow-auto px-4 pb-4 pt-2">
+        <div className="space-y-3">
+          {crimeTypes.map((crime, index) => (
+            <div key={index} className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-slate-700">{crime.type}</span>
+                <span className="text-slate-500">
+                  {crime.count} kasus ({crime.percentage}%)
                 </span>
               </div>
-              <div className="w-full bg-slate-200 rounded-full h-2.5">
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className={`${colors[index % colors.length]} h-2.5 rounded-full transition-all duration-500`}
-                  style={{ width: `${item.percentage}%` }}
-                ></div>
+                  className={`h-full rounded-full ${getBarColor(
+                    index
+                  )} transition-all duration-500`}
+                  style={{ width: `${crime.percentage}%` }}
+                />
               </div>
             </div>
           ))}

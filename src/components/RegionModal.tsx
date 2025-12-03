@@ -6,66 +6,45 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../components/ui/dialog";
-import { Badge } from "../components/ui/badge";
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { X, TrendingUp, FileCheck, Clock, MapPin } from "lucide-react";
 import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  ResponsiveContainer,
-  Legend,
-  Tooltip,
   LineChart,
   Line,
-  XAxis,
-  YAxis,
   CartesianGrid,
 } from "recharts";
-import { X, MapPin, TrendingUp, CheckCircle, Clock } from "lucide-react";
+
+const COLORS = ["#f43f5e", "#8b5cf6", "#f59e0b", "#10b981", "#64748b"];
 
 interface RegionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  region: {
-    id: number;
-    name: string;
-    crimeCount: number;
-    crimeRate: string;
-  };
-  stats: {
-    totalCases: number;
-    solved: number;
-    pending: number;
-    byType: Array<{ name: string; value: number }>;
-    monthlyTrend: Array<{ month: string; cases: number }>;
-    recentCases: Array<{
-      id: number;
-      type: string;
-      location: string;
-      date: string;
-      status: string;
-    }>;
-  };
+  regionData: any;
+  crimeStats: any;
 }
 
 const RegionModal: React.FC<RegionModalProps> = ({
   isOpen,
   onClose,
-  region,
-  stats,
+  regionData,
+  crimeStats,
 }) => {
-  const COLORS = ["#3b82f6", "#8b5cf6", "#ef4444", "#f59e0b", "#64748b"];
+  if (!regionData || !crimeStats) return null;
 
-  const getRateColor = (rate: string) => {
-    switch (rate) {
-      case "Tinggi":
-        return "bg-red-100 text-red-700";
-      case "Sedang":
-        return "bg-amber-100 text-amber-700";
-      default:
-        return "bg-emerald-100 text-emerald-700";
-    }
-  };
+  const { name, crimeCount, crimeRate, color } = regionData.properties;
+  const stats = crimeStats;
 
   const getStatusStyle = (status: string) => {
     return status === "Selesai"
@@ -75,174 +54,223 @@ const RegionModal: React.FC<RegionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white p-0 z-[2000]">
+        <DialogHeader className="p-6 pb-4 border-b border-slate-100">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold text-slate-800 flex items-center">
-              <MapPin className="mr-2 h-6 w-6 text-blue-600" />
-              {region.name}
-            </DialogTitle>
-            <Badge variant="secondary" className={`${getRateColor(region.crimeRate)} text-sm`}>
-              {region.crimeRate}
+            <div className="flex items-center gap-3">
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              <DialogTitle className="text-xl font-semibold text-slate-800">
+                {name}
+              </DialogTitle>
+            </div>
+            <Badge
+              className="px-3 py-1"
+              style={{ backgroundColor: `${color}20`, color: color }}
+            >
+              {crimeRate}
             </Badge>
           </div>
+          <DialogDescription className="text-slate-500 mt-2">
+            Statistik kriminalitas wilayah {name}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-600 font-medium">
-                    Total Kasus
-                  </p>
-                  <p className="text-2xl font-bold text-blue-700 mt-1">
-                    {stats.totalCases}
-                  </p>
-                </div>
-                <div className="bg-blue-100 p-2 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-blue-600" />
-                </div>
+        <div className="p-6">
+          {/* Summary Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-slate-50 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-slate-800">
+                {stats.totalCases}
               </div>
+              <div className="text-xs text-slate-500 mt-1">Total Kasus</div>
             </div>
-
-            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-emerald-600 font-medium">
-                    Terselesaikan
-                  </p>
-                  <p className="text-2xl font-bold text-emerald-700 mt-1">
-                    {stats.solved}
-                  </p>
-                </div>
-                <div className="bg-emerald-100 p-2 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-emerald-600" />
-                </div>
+            <div className="bg-emerald-50 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-emerald-600">
+                {stats.solved}
               </div>
+              <div className="text-xs text-emerald-600 mt-1">Selesai</div>
             </div>
-
-            <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-amber-600 font-medium">
-                    Dalam Proses
-                  </p>
-                  <p className="text-2xl font-bold text-amber-700 mt-1">
-                    {stats.pending}
-                  </p>
-                </div>
-                <div className="bg-amber-100 p-2 rounded-lg">
-                  <Clock className="h-6 w-6 text-amber-600" />
-                </div>
+            <div className="bg-amber-50 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-amber-600">
+                {stats.pending}
               </div>
+              <div className="text-xs text-amber-600 mt-1">Dalam Proses</div>
             </div>
           </div>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Pie Chart */}
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                Distribusi Jenis Kriminalitas
-              </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={stats.byType}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name}: ${percent ? (percent * 100).toFixed(0) : 0}%`
-                    }
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {stats.byType.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Line Chart */}
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">
+          <Tabs defaultValue="chart" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="chart" className="text-sm">
+                Grafik Jenis
+              </TabsTrigger>
+              <TabsTrigger value="trend" className="text-sm">
                 Tren Bulanan
-              </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={stats.monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: "#64748b", fontSize: 12 }}
-                  />
-                  <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "8px",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="cases"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={{ fill: "#3b82f6", r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+              </TabsTrigger>
+              <TabsTrigger value="cases" className="text-sm">
+                Kasus Terbaru
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Recent Cases */}
-          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">
-              Kasus Terbaru
-            </h3>
-            <div className="space-y-3">
-              {stats.recentCases.map((caseItem) => (
-                <div
-                  key={caseItem.id}
-                  className="bg-white p-4 rounded-lg border border-slate-200 flex items-center justify-between"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-slate-800">
-                        {caseItem.type}
-                      </span>
-                      <Badge
-                        variant="secondary"
-                        className={getStatusStyle(caseItem.status)}
+            <TabsContent value="chart" className="mt-0">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Bar Chart */}
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <h4 className="text-sm font-medium text-slate-700 mb-3">
+                    Distribusi Kasus
+                  </h4>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={stats.byType} layout="vertical">
+                      <XAxis type="number" tick={{ fontSize: 11 }} />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        tick={{ fontSize: 11 }}
+                        width={70}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                        }}
+                      />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                        {stats.byType.map((entry: any, index: number) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Pie Chart */}
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <h4 className="text-sm font-medium text-slate-700 mb-3">
+                    Proporsi Jenis
+                  </h4>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={stats.byType}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={70}
+                        paddingAngle={3}
+                        dataKey="value"
                       >
-                        {caseItem.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-slate-600">
-                      {caseItem.location}
-                    </p>
-                  </div>
-                  <div className="text-sm text-slate-500">
-                    {new Date(caseItem.date).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                        {stats.byType.map((entry: any, index: number) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          background: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-wrap justify-center gap-2 mt-2">
+                    {stats.byType.map((item: any, index: number) => (
+                      <div key={index} className="flex items-center gap-1">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: COLORS[index] }}
+                        />
+                        <span className="text-xs text-slate-500">
+                          {item.name}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="trend" className="mt-0">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <h4 className="text-sm font-medium text-slate-700 mb-3">
+                  Tren Kasus per Bulan (2025)
+                </h4>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={stats.monthlyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 12 }}
+                      stroke="#94a3b8"
+                    />
+                    <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                    <Tooltip
+                      contentStyle={{
+                        background: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="cases"
+                      stroke="#8b5cf6"
+                      strokeWidth={3}
+                      dot={{ fill: "#8b5cf6", strokeWidth: 2 }}
+                      activeDot={{ r: 6, fill: "#7c3aed" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="cases" className="mt-0">
+              <div className="space-y-3">
+                {stats.recentCases.map((crime: any, index: number) => (
+                  <div
+                    key={crime.id}
+                    className="bg-slate-50 rounded-xl p-4 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
+                        <span className="text-lg font-bold text-slate-400">
+                          #{index + 1}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-slate-800">
+                          {crime.type}
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-slate-500">
+                          <MapPin className="w-3 h-3" />
+                          {crime.location}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge className={`${getStatusStyle(crime.status)}`}>
+                        {crime.status}
+                      </Badge>
+                      <div className="text-xs text-slate-400 mt-1">
+                        {new Date(crime.date).toLocaleDateString("id-ID")}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>
