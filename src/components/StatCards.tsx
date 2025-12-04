@@ -8,8 +8,8 @@ import {
   Minus,
   AlertTriangle,
   Shield,
-  FileCheck,
-  Clock,
+  Home,
+  Camera,
 } from "lucide-react";
 
 interface OverallStats {
@@ -41,7 +41,7 @@ const StatCards: React.FC<StatCardsProps> = ({ stats }) => {
 
   const cards = [
     {
-      title: "Total Kasus",
+      title: "Jumlah Kriminalitas",
       value: stats.totalCases,
       icon: <AlertTriangle className="w-5 h-5" />,
       color: "from-rose-500 to-rose-600",
@@ -49,25 +49,25 @@ const StatCards: React.FC<StatCardsProps> = ({ stats }) => {
       bgColor: "bg-rose-50",
     },
     {
-      title: "Kasus Selesai",
+      title: "Jumlah Desa",
       value: stats.solvedCases,
-      icon: <FileCheck className="w-5 h-5" />,
+      icon: <Home className="w-5 h-5" />,
       color: "from-emerald-500 to-emerald-600",
       textColor: "text-emerald-600",
       bgColor: "bg-emerald-50",
     },
     {
-      title: "Dalam Proses",
+      title: "Jumlah Pos Keamanan",
       value: stats.pendingCases,
-      icon: <Clock className="w-5 h-5" />,
+      icon: <Shield className="w-5 h-5" />,
       color: "from-amber-500 to-amber-600",
       textColor: "text-amber-600",
       bgColor: "bg-amber-50",
     },
     {
-      title: "Clearance Rate",
-      value: `${stats.clearanceRate}%`,
-      icon: <Shield className="w-5 h-5" />,
+      title: "Jumlah CCTV",
+      value: stats.clearanceRate,
+      icon: <Camera className="w-5 h-5" />,
       color: "from-sky-500 to-sky-600",
       textColor: "text-sky-600",
       bgColor: "bg-sky-50",

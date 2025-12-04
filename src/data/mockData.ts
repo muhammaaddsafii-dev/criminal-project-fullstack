@@ -338,10 +338,10 @@ export const crimeStatsByDistrict: any = {
 };
 
 export const overallStats = {
-  totalCases: 1000,
-  solvedCases: 781,
-  pendingCases: 219,
-  clearanceRate: 78.1,
+  totalCases: 100,
+  solvedCases: 6,
+  pendingCases: 56,
+  clearanceRate: 40,
   districtData: [
     { name: "Jakarta Barat", total: 312 },
     { name: "Jakarta Pusat", total: 245 },

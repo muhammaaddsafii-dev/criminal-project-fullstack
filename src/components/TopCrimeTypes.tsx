@@ -40,7 +40,7 @@ const TopCrimeTypes: React.FC<TopCrimeTypesProps> = ({ crimeTypes }) => {
             <div key={index} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium text-slate-700">{crime.type}</span>
-                <span className="text-slate-500">
+                <span className="text-xs text-black font-medium">
                   {crime.count} kasus ({crime.percentage}%)
                 </span>
               </div>
