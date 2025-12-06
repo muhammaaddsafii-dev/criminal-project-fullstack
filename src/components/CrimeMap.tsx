@@ -140,7 +140,7 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
   return (
     <div className="relative w-full h-full rounded-xl overflow-hidden shadow-lg">
       <MapContainer
-        center={[-6.2, 106.85]}
+        center={[-2.929941, 122.073775]}
         zoom={11}
         className="w-full h-full"
         zoomControl={true}
