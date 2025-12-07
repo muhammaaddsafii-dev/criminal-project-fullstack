@@ -51,7 +51,7 @@ export default function Home() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-slate-800 truncate">
-                  CrimeWatch Jakarta
+                  Monitoring Kriminalitas Morowali
                 </h1>
                 <p className="text-[10px] sm:text-xs text-slate-500 hidden sm:block">
                   Sistem Visualisasi Kriminalitas
@@ -60,8 +60,8 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 text-[10px] sm:text-xs md:text-sm text-slate-500 flex-shrink-0">
               <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden md:inline">DKI Jakarta, Indonesia</span>
-              <span className="md:hidden">Jakarta</span>
+              <span className="hidden md:inline">Morowali, Indonesia</span>
+              <span className="md:hidden">Sulawesi Tengah</span>
             </div>
           </div>
         </div>
@@ -79,10 +79,10 @@ export default function Home() {
           {/* Desktop: Sidebar kiri (20%) */}
           <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
             <div className="h-[300px] sm:h-[350px] xl:h-[365px]">
-              <HotspotCard hotspots={overallStats.hotspots} />
+              <HotspotCard/>
             </div>
             <div className="h-[300px] sm:h-[350px] xl:h-[365px]">
-              <RecentIncidents incidents={overallStats.recentIncidents} />
+              <RecentIncidents />
             </div>
           </div>
 
@@ -120,16 +120,16 @@ export default function Home() {
           {/* Desktop: Sidebar kanan (20%) */}
           <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
             <div className="h-[300px] sm:h-[350px] xl:h-[365px]">
-              <DistrictCrimeChart data={overallStats.districtData} />
+              <DistrictCrimeChart />
             </div>
             <div className="h-[300px] sm:h-[350px] xl:h-[365px]">
-              <TopCrimeTypes crimeTypes={overallStats.topCrimeTypes} />
+              <TopCrimeTypes />
             </div>
           </div>
         </div>
 
         {/* Data Table - Full Width, Responsive */}
-        <CrimeTable data={crimeTableData} />
+        <CrimeTable/>
       </main>
 
       {/* Footer - Responsive */}

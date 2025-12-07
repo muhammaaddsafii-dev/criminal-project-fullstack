@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TableIcon, Search, Filter } from "lucide-react";
+import { TableIcon, Search, Loader2 } from "lucide-react";
 
 interface CrimeData {
   id: number;
@@ -27,24 +27,108 @@ interface CrimeData {
   type: string;
   location: string;
   date: string;
-  status: string;
+  severity: string; // Changed from status to severity
   reportNumber: string;
 }
 
-interface CrimeTableProps {
-  data: CrimeData[];
-}
-
-const CrimeTable: React.FC<CrimeTableProps> = ({ data }) => {
+const CrimeTable: React.FC = () => {
+  const [data, setData] = useState<CrimeData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDistrict, setFilterDistrict] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterSeverity, setFilterSeverity] = useState("all");
   const [filterType, setFilterType] = useState("all");
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [types, setTypes] = useState<string[]>([]);
 
-  const getStatusStyle = (status: string) => {
-    return status === "Selesai"
-      ? "bg-emerald-100 text-emerald-700"
-      : "bg-amber-100 text-amber-700";
+  // Fungsi untuk mengambil data dari API
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('search', searchTerm);
+      if (filterDistrict !== 'all') params.append('district', filterDistrict);
+      if (filterSeverity !== 'all') params.append('severity', filterSeverity);
+      if (filterType !== 'all') params.append('type', filterType);
+      
+      console.log('Fetching data with params:', params.toString());
+      
+      const response = await fetch(`/api/crime-data?${params.toString()}`);
+      const result = await response.json();
+      console.log('API Response:', result);
+      setData(result.data || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fungsi untuk mengambil daftar wilayah
+  const fetchDistricts = async () => {
+    try {
+      console.log('Fetching districts...');
+      const response = await fetch('/api/districts');
+      const result = await response.json();
+      console.log('Districts API Response:', result);
+      
+      // Pastikan result adalah array dan tidak undefined
+      if (Array.isArray(result)) {
+        const districtNames = result
+          .filter((item: any) => item && item.district) // Filter out null/undefined
+          .map((item: any) => item.district);
+        setDistricts(districtNames);
+        console.log('Extracted district names:', districtNames);
+      } else {
+        console.error('Districts API did not return an array:', result);
+        setDistricts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching districts:', error);
+      setDistricts([]);
+    }
+  };
+
+  // Fungsi untuk mengambil daftar jenis kejahatan dari tabel types
+  const fetchTypes = async () => {
+    try {
+      const response = await fetch('/api/crime-types');
+      const result = await response.json();
+      setTypes(result || []);
+    } catch (error) {
+      console.error('Error fetching crime types:', error);
+      setTypes([]);
+    }
+  };
+
+  // Load data saat komponen mount atau filter berubah
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300); // Debounce 300ms
+    return () => clearTimeout(timer);
+  }, [searchTerm, filterDistrict, filterSeverity, filterType]);
+
+  // Load districts dan types saat komponen mount
+  useEffect(() => {
+    fetchDistricts();
+    fetchTypes();
+  }, []);
+
+  const getSeverityStyle = (severity: string) => {
+    switch (severity) {
+      case "LOW":
+        return "bg-green-100 text-green-800";
+      case "MEDIUM":
+        return "bg-yellow-100 text-yellow-800";
+      case "HIGH":
+        return "bg-orange-100 text-orange-800";
+      case "CRITICAL":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   const getTypeStyle = (type: string) => {
@@ -62,20 +146,20 @@ const CrimeTable: React.FC<CrimeTableProps> = ({ data }) => {
     }
   };
 
-  const filteredData = data.filter((item) => {
-    const matchSearch =
-      item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.reportNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchDistrict =
-      filterDistrict === "all" || item.district === filterDistrict;
-    const matchStatus = filterStatus === "all" || item.status === filterStatus;
-    const matchType = filterType === "all" || item.type === filterType;
-
-    return matchSearch && matchDistrict && matchStatus && matchType;
-  });
-
-  const districts = [...new Set(data.map((item) => item.district))];
-  const types = [...new Set(data.map((item) => item.type))];
+  const getSeverityLabel = (severity: string) => {
+    switch (severity) {
+      case "LOW":
+        return "Rendah";
+      case "MEDIUM":
+        return "Sedang";
+      case "HIGH":
+        return "Tinggi";
+      case "CRITICAL":
+        return "Kritis";
+      default:
+        return severity;
+    }
+  };
 
   return (
     <Card className="shadow-lg border-slate-200">
@@ -84,7 +168,7 @@ const CrimeTable: React.FC<CrimeTableProps> = ({ data }) => {
           {/* Title di kiri */}
           <CardTitle className="flex items-center gap-2 text-slate-800">
             <TableIcon className="w-5 h-5" />
-            Data Kriminalitas
+            Data Kriminalitas {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           </CardTitle>
 
           {/* Search dan Filter di kanan */}
@@ -130,15 +214,17 @@ const CrimeTable: React.FC<CrimeTableProps> = ({ data }) => {
               </SelectContent>
             </Select>
 
-            {/* Filter Status */}
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[140px] h-9 text-sm">
-                <SelectValue placeholder="Semua Status" />
+            {/* Filter Severity */}
+            <Select value={filterSeverity} onValueChange={setFilterSeverity}>
+              <SelectTrigger className="w-[160px] h-9 text-sm">
+                <SelectValue placeholder="Semua Severity" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="Proses">Proses</SelectItem>
-                <SelectItem value="Selesai">Selesai</SelectItem>
+                <SelectItem value="all">Semua Severity</SelectItem>
+                <SelectItem value="LOW">Rendah</SelectItem>
+                <SelectItem value="MEDIUM">Sedang</SelectItem>
+                <SelectItem value="HIGH">Tinggi</SelectItem>
+                <SelectItem value="CRITICAL">Kritis</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -146,99 +232,107 @@ const CrimeTable: React.FC<CrimeTableProps> = ({ data }) => {
       </CardHeader>
 
       <CardContent className="p-4 space-y-4">
-        {/* Table with Fixed Header and Scrollable Body */}
-        <div className="border rounded-lg overflow-hidden">
-          {/* Fixed Table Header */}
-          <Table>
-            <TableHeader className="bg-slate-100">
-              <TableRow>
-                <TableHead className="font-semibold text-slate-700 w-[140px]">
-                  No. Laporan
-                </TableHead>
-                <TableHead className="font-semibold text-slate-700 w-[140px]">
-                  Wilayah
-                </TableHead>
-                <TableHead className="font-semibold text-slate-700 w-[130px]">
-                  Jenis
-                </TableHead>
-                <TableHead className="font-semibold text-slate-700 w-[200px]">
-                  Lokasi
-                </TableHead>
-                <TableHead className="font-semibold text-slate-700 w-[130px]">
-                  Tanggal
-                </TableHead>
-                <TableHead className="font-semibold text-slate-700 w-[110px]">
-                  Status
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-          </Table>
-
-          {/* Scrollable Table Body */}
-          <div className="overflow-y-auto overflow-x-auto max-h-[400px]">
-            <Table>
-              <TableBody>
-                {filteredData.length > 0 ? (
-                  filteredData.map((item) => (
-                    <TableRow
-                      key={item.id}
-                      className="hover:bg-slate-50 transition-colors"
-                    >
-                      <TableCell className="font-mono text-xs text-slate-600 w-[140px]">
-                        {item.reportNumber}
-                      </TableCell>
-                      <TableCell className="font-medium text-slate-700 w-[140px]">
-                        {item.district}
-                      </TableCell>
-                      <TableCell className="w-[130px]">
-                        <Badge
-                          variant="secondary"
-                          className={`${getTypeStyle(item.type)} font-medium`}
-                        >
-                          {item.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-slate-600 w-[200px]">
-                        {item.location}
-                      </TableCell>
-                      <TableCell className="text-slate-600 w-[130px]">
-                        {new Date(item.date).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </TableCell>
-                      <TableCell className="w-[110px]">
-                        <Badge
-                          variant="secondary"
-                          className={`${getStatusStyle(
-                            item.status
-                          )} font-medium`}
-                        >
-                          {item.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="text-center py-8 text-slate-500"
-                    >
-                      Tidak ada data yang ditemukan
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+        {/* Table dengan Loading State */}
+        {loading ? (
+          <div className="flex justify-center items-center h-[400px]">
+            <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Table with Fixed Header and Scrollable Body */}
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader className="bg-slate-100">
+                  <TableRow>
+                    <TableHead className="font-semibold text-slate-700 w-[140px]">
+                      No. Laporan
+                    </TableHead>
+                    <TableHead className="font-semibold text-slate-700 w-[140px]">
+                      Wilayah
+                    </TableHead>
+                    <TableHead className="font-semibold text-slate-700 w-[130px]">
+                      Jenis
+                    </TableHead>
+                    <TableHead className="font-semibold text-slate-700 w-[200px]">
+                      Lokasi
+                    </TableHead>
+                    <TableHead className="font-semibold text-slate-700 w-[130px]">
+                      Tanggal
+                    </TableHead>
+                    <TableHead className="font-semibold text-slate-700 w-[110px]">
+                      Severity
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+              </Table>
 
-        {/* Footer with data count */}
-        <div className="text-sm text-slate-600">
-          Menampilkan {filteredData.length} dari {data.length} data
-        </div>
+              {/* Scrollable Table Body */}
+              <div className="overflow-y-auto overflow-x-auto max-h-[400px]">
+                <Table>
+                  <TableBody>
+                    {data.length > 0 ? (
+                      data.map((item) => (
+                        <TableRow
+                          key={item.id}
+                          className="hover:bg-slate-50 transition-colors"
+                        >
+                          <TableCell className="font-mono text-xs text-slate-600 w-[140px]">
+                            {item.reportNumber}
+                          </TableCell>
+                          <TableCell className="font-medium text-slate-700 w-[140px]">
+                            {item.district}
+                          </TableCell>
+                          <TableCell className="w-[130px]">
+                            <Badge
+                              variant="secondary"
+                              className={`${getTypeStyle(item.type)} font-medium`}
+                            >
+                              {item.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-slate-600 w-[200px]">
+                            {item.location}
+                          </TableCell>
+                          <TableCell className="text-slate-600 w-[130px]">
+                            {new Date(item.date).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </TableCell>
+                          <TableCell className="w-[110px]">
+                            <Badge
+                              variant="secondary"
+                              className={`${getSeverityStyle(
+                                item.severity
+                              )} font-medium`}
+                            >
+                              {getSeverityLabel(item.severity)}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-8 text-slate-500"
+                        >
+                          Tidak ada data yang ditemukan
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Footer dengan jumlah data */}
+            <div className="text-sm text-slate-600">
+              Menampilkan {data.length} data
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
