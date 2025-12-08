@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import StatCards from "@/components/StatCards";
 import HotspotCard from "@/components/HotspotCard";
 import RecentIncidents from "@/components/RecentIncidents";
@@ -14,7 +15,7 @@ import {
   overallStats,
   crimeTableData,
 } from "@/data/mockData";
-import { MapPin, Shield } from "lucide-react";
+import { MapPin, Shield, Settings, Database } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const CrimeMap = dynamic(() => import("@/components/CrimeMap"), {
@@ -58,10 +59,23 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 text-[10px] sm:text-xs md:text-sm text-slate-500 flex-shrink-0">
-              <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden md:inline">Morowali, Indonesia</span>
-              <span className="md:hidden">Sulawesi Tengah</span>
+            
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 text-[10px] sm:text-xs md:text-sm text-slate-500 flex-shrink-0">
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden md:inline">Morowali, Indonesia</span>
+                <span className="md:hidden">Sulawesi Tengah</span>
+              </div>
+              
+              {/* Tambahkan button Dashboard di sini */}
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded-md transition-colors"
+              >
+                <Database className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Dashboard</span>
+                <span className="sm:hidden">CRUD</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -139,7 +153,7 @@ export default function Home() {
             <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500">
               <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="text-center sm:text-left">
-                CrimeWatch Jakarta - Data Dummy untuk Demonstrasi
+                CrimeWatch Morowali - Data Dummy untuk Demonstrasi
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-400">

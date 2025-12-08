@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -20,6 +21,14 @@ export default function RootLayout({
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossOrigin=""
         />
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet/dist/leaflet.css"
+        />
+        <script
+          src="https://unpkg.com/leaflet/dist/leaflet.js"
+          async
+        ></script>
       </head>
       <body className="antialiased" suppressHydrationWarning>
         {children}
