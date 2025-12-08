@@ -1,18 +1,19 @@
 // app/api/crime-incidents/[id]/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 
-// Interface untuk params yang sudah di-unwrap
+// Interface untuk params Next.js 15+
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    // Unwrap params
-    const { id } = await Promise.resolve(params);
+    // Await params directly
+    const { id } = await params;
     
     const query = `
       SELECT 
@@ -48,8 +49,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    // Unwrap params
-    const { id } = await Promise.resolve(params);
+    // Await params directly
+    const { id } = await params;
     const body = await request.json();
     
     const {
@@ -107,9 +108,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     ];
 
     console.log('Update query values:', values);
-
     const result = await pool.query(query, values);
-    
+
     // Get the full record with joins
     const fullQuery = `
       SELECT 
@@ -123,7 +123,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       LEFT JOIN types t ON ci.type_id = t.id
       WHERE ci.id = $1
     `;
-    
+
     const fullResult = await pool.query(fullQuery, [id]);
     
     return NextResponse.json(fullResult.rows[0]);
@@ -146,9 +146,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    // Unwrap params
-    const { id } = await Promise.resolve(params);
-    
+    // Await params directly
+    const { id } = await params;
+
     // Check if incident exists
     const checkQuery = 'SELECT id FROM crime_incidents WHERE id = $1';
     const checkResult = await pool.query(checkQuery, [id]);

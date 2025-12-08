@@ -10,7 +10,9 @@ import {
   useMap,
   LayersControl
 } from "react-leaflet";
-import L from "leaflet";
+// import L from "leaflet";
+import * as L from "leaflet";
+
 import "leaflet/dist/leaflet.css";
 
 interface CrimeMapProps {
@@ -94,7 +96,7 @@ const Legend = () => {
   const map = useMap();
 
   useEffect(() => {
-    const legend = L.control({ position: "bottomright" });
+    const legend = new L.Control({ position: "bottomright" });
 
     legend.onAdd = () => {
       const div = L.DomUtil.create("div", "legend");
