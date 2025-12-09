@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Crime Dashboard - Peta Kriminalitas Jakarta",
-  description: "Dashboard interaktif untuk monitoring kriminalitas di Jakarta",
+  title: "Crime Dashboard - Peta Kriminalitas Morowali",
+  description: "Dashboard interaktif untuk monitoring kriminalitas di Morowali",
 };
 
 export default function RootLayout({
