@@ -23,13 +23,21 @@ export default function RootLayout({
         />
         <link
           rel="stylesheet"
-          href="https://unpkg.com/leaflet/dist/leaflet.css"
+          href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"
+        />
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"
         />
         <script
           src="https://unpkg.com/leaflet/dist/leaflet.js"
           async
         ></script>
       </head>
+
+
+
+
       <body className="antialiased" suppressHydrationWarning>
         {children}
       </body>
