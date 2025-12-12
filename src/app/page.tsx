@@ -59,22 +59,24 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2 sm:gap-3">
+
+            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
               <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 text-[10px] sm:text-xs md:text-sm text-slate-500 flex-shrink-0">
                 <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden md:inline">Morowali, Indonesia</span>
-                <span className="md:hidden">Sulawesi Tengah</span>
+                <span className="hidden lg:inline">Morowali, Indonesia</span>
+                <span className="hidden sm:inline lg:hidden">
+                  Sulawesi Tengah
+                </span>
               </div>
-              
-              {/* Tambahkan button Dashboard di sini */}
+
+              {/* Button Dashboard - Responsive */}
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded-md transition-colors"
+                className="inline-flex items-center justify-center gap-1 sm:gap-1.5 md:gap-2 px-2 py-1.5 sm:px-3 sm:py-1.5 md:px-4 md:py-2 text-[10px] sm:text-xs md:text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded-md transition-colors whitespace-nowrap"
               >
-                <Database className="w-3 h-3 sm:w-4 sm:h-4" />
+                <Database className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+                <span className="hidden xs:inline sm:hidden">Data</span>
                 <span className="hidden sm:inline">Dashboard</span>
-                <span className="sm:hidden">CRUD</span>
               </Link>
             </div>
           </div>
@@ -93,7 +95,7 @@ export default function Home() {
           {/* Desktop: Sidebar kiri (20%) */}
           <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
             <div className="h-[300px] sm:h-[350px] xl:h-[365px]">
-              <HotspotCard/>
+              <HotspotCard />
             </div>
             <div className="h-[300px] sm:h-[350px] xl:h-[365px]">
               <RecentIncidents />
@@ -143,7 +145,7 @@ export default function Home() {
         </div>
 
         {/* Data Table - Full Width, Responsive */}
-        <CrimeTable/>
+        <CrimeTable />
       </main>
 
       {/* Footer - Responsive */}
