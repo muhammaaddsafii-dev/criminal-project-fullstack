@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import StatCards from "@/components/StatCards";
-import HotspotCard from "@/components/HotspotCard";
 import RecentIncidents from "@/components/RecentIncidents";
 import TopCrimeTypes from "@/components/TopCrimeTypes";
 import DistrictCrimeChart from "@/components/DistrictCrimeChart";
@@ -16,6 +15,7 @@ import {
   crimeTableData,
 } from "@/data/mockData";
 import { MapPin, Shield, Settings, Database } from "lucide-react";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import dynamic from "next/dynamic";
 
 const CrimeMap = dynamic(() => import("@/components/CrimeMap"), {
@@ -61,14 +61,6 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
-              {/* <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 text-[10px] sm:text-xs md:text-sm text-slate-500 flex-shrink-0">
-                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden lg:inline">Morowali, Indonesia</span>
-                <span className="hidden sm:inline lg:hidden">
-                  Sulawesi Tengah
-                </span>
-              </div> */}
-
               {/* Button Dashboard - Responsive */}
               <Link
                 href="/dashboard"
@@ -90,14 +82,11 @@ export default function Home() {
 
         {/* Dashboard Grid Layout - Responsive untuk semua device */}
         <div className="grid grid-cols-1 xl:grid-cols-10 gap-4 sm:gap-6 mb-4 sm:mb-6">
-          {/* Left Column - Hotspot & Recent Incidents */}
-          {/* Mobile & Tablet: Stack secara horizontal */}
-          {/* Desktop: Sidebar kiri (20%) */}
-          <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
-            <div className="h-[300px] sm:h-[350px] xl:h-[365px]">
-              <HotspotCard />
-            </div>
-            <div className="h-[300px] sm:h-[350px] xl:h-[365px]">
+          {/* Left Column - Recent Incidents (Full) */}
+          {/* Mobile & Tablet: Full width */}
+          {/* Desktop: Sidebar kiri (20%) full height */}
+          <div className="xl:col-span-2">
+            <div className="h-[400px] sm:h-[500px] md:h-[600px] xl:h-[750px] overflow-y-auto">
               <RecentIncidents />
             </div>
           </div>

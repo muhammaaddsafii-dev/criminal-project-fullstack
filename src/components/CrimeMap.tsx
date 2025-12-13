@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { 
-  MapContainer, 
-  TileLayer, 
-  GeoJSON, 
-  Marker, 
-  Popup, 
+import {
+  MapContainer,
+  TileLayer,
+  GeoJSON,
+  Marker,
+  Popup,
   useMap,
-  LayersControl
+  LayersControl,
 } from "react-leaflet";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -103,22 +103,18 @@ const Legend = () => {
       const div = L.DomUtil.create("div", "legend");
       div.innerHTML = `
         <div style="background: white; padding: 12px 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-family: system-ui, sans-serif; min-width: 160px;">
-            <div style="font-weight: 600; font-size: 12px; color: #334155; margin-bottom: 8px;">Tingkat Insiden</div>
+            <div style="font-weight: 600; font-size: 12px; color: #334155; margin-bottom: 8px;">Tingkat Kriminalitas</div>
             <div style="display: flex; flex-direction: column; gap: 6px;">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 12px; height: 12px; background: #dc2626; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>
-                <span style="font-size: 11px; color: #64748b;">Kritis</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 12px; height: 12px; background: #ea580c; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>
+                <div style="width: 12px; height: 12px; background: #ea580c; border-radius: 10%; border: 2px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>
                 <span style="font-size: 11px; color: #64748b;">Tinggi</span>
               </div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>
+                <div style="width: 12px; height: 12px; background: #f59e0b; border-radius: 10%; border: 2px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>
                 <span style="font-size: 11px; color: #64748b;">Sedang</span>
               </div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 12px; height: 12px; background: #16a34a; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>
+                <div style="width: 12px; height: 12px; background: #16a34a; border-radius: 10%; border: 2px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>
                 <span style="font-size: 11px; color: #64748b;">Rendah</span>
               </div>
             </div>
@@ -160,28 +156,28 @@ const CrimeMarkerCluster = ({ incidents }: { incidents: CrimeIncident[] }) => {
       spiderLegPolylineOptions: {
         weight: 1.5,
         color: "#222",
-        opacity: 0.5
+        opacity: 0.5,
       },
-      iconCreateFunction: function(cluster: any) {
+      iconCreateFunction: function (cluster: any) {
         const childCount = cluster.getChildCount();
-        let size = 'small';
-        let color = '#3b82f6'; // blue-500
-        
+        let size = "small";
+        let color = "#3b82f6"; // blue-500
+
         if (childCount < 10) {
-          size = 'small';
-          color = '#3b82f6';
+          size = "small";
+          color = "#3b82f6";
         } else if (childCount < 100) {
-          size = 'medium';
-          color = '#1d4ed8'; // blue-700
+          size = "medium";
+          color = "#1d4ed8"; // blue-700
         } else {
-          size = 'large';
-          color = '#1e40af'; // blue-800
+          size = "large";
+          color = "#1e40af"; // blue-800
         }
 
         const sizes: Record<string, number> = {
           small: 40,
           medium: 50,
-          large: 60
+          large: 60,
         };
 
         return L.divIcon({
@@ -197,38 +193,40 @@ const CrimeMarkerCluster = ({ incidents }: { incidents: CrimeIncident[] }) => {
             justify-content: center;
             color: white;
             font-weight: bold;
-            font-size: ${size === 'small' ? '14px' : size === 'medium' ? '16px' : '18px'};
+            font-size: ${
+              size === "small" ? "14px" : size === "medium" ? "16px" : "18px"
+            };
           ">
             ${childCount}
           </div>`,
-          className: 'custom-cluster-icon',
-          iconSize: L.point(sizes[size], sizes[size], true)
+          className: "custom-cluster-icon",
+          iconSize: L.point(sizes[size], sizes[size], true),
         });
-      }
+      },
     });
 
     // Tambahkan markers ke cluster group
     incidents.forEach((incident) => {
       const coordinates = incident.location?.coordinates;
       if (!coordinates || coordinates.length !== 2) return;
-      
+
       const position: [number, number] = [coordinates[1], coordinates[0]];
-      
+
       const marker = L.marker(position, {
-        icon: getSeverityIcon(incident.severity_level)
+        icon: getSeverityIcon(incident.severity_level),
       });
 
       // Format date and time
       const formatDateTime = (date: string, time: string) => {
         const dateObj = new Date(date);
-        const formattedDate = dateObj.toLocaleDateString('id-ID', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric'
+        const formattedDate = dateObj.toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
         });
-        
+
         if (!time) return formattedDate;
-        
+
         return `${formattedDate}, ${time.substring(0, 5)}`;
       };
 
@@ -245,10 +243,15 @@ const CrimeMarkerCluster = ({ incidents }: { incidents: CrimeIncident[] }) => {
           </h3>
           <div style="margin-bottom: 8px;">
             <span style="display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;
-              ${incident.severity_level === 'CRITICAL' ? 'background-color: #fee2e2; color: #dc2626;' :
-                incident.severity_level === 'HIGH' ? 'background-color: #ffedd5; color: #ea580c;' :
-                incident.severity_level === 'MEDIUM' ? 'background-color: #fef3c7; color: #d97706;' :
-                'background-color: #dcfce7; color: #16a34a;'}
+              ${
+                incident.severity_level === "CRITICAL"
+                  ? "background-color: #fee2e2; color: #dc2626;"
+                  : incident.severity_level === "HIGH"
+                  ? "background-color: #ffedd5; color: #ea580c;"
+                  : incident.severity_level === "MEDIUM"
+                  ? "background-color: #fef3c7; color: #d97706;"
+                  : "background-color: #dcfce7; color: #16a34a;"
+              }
             ">
               Tingkat: ${incident.severity_level}
             </span>
@@ -259,18 +262,28 @@ const CrimeMarkerCluster = ({ incidents }: { incidents: CrimeIncident[] }) => {
               ${formatDateTime(incident.incident_date, incident.incident_time)}
             </p>
             <p style="margin: 4px 0;">
-              <span style="font-weight: 500;">Lokasi:</span> ${incident.area_name}
+              <span style="font-weight: 500;">Lokasi:</span> ${
+                incident.area_name
+              }
             </p>
-            ${incident.address ? `
+            ${
+              incident.address
+                ? `
               <p style="margin: 4px 0;">
                 <span style="font-weight: 500;">Alamat:</span> ${incident.address}
               </p>
-            ` : ''}
-            ${incident.description ? `
+            `
+                : ""
+            }
+            ${
+              incident.description
+                ? `
               <p style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0; color: #64748b;">
                 ${incident.description}
               </p>
-            ` : ''}
+            `
+                : ""
+            }
           </div>
         </div>
       `;
@@ -352,19 +365,19 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
           //     area_name: ["Morowali Utara", "Morowali", "Bungku", "Bahodopi", "Wita Ponda"][Math.floor(Math.random() * 5)]
           //   }))
           // ];
-          
+
           // setIncidents(mockIncidents);
           // setLoadingIncidents(false);
-          
+
           // Untuk API nyata, gunakan kode berikut:
-          const response = await fetch('/api/incidents');
+          const response = await fetch("/api/incidents");
           if (response.ok) {
             const data = await response.json();
             setIncidents(data);
             setLoadingIncidents(false);
           }
         } catch (error) {
-          console.error('Error fetching incidents:', error);
+          console.error("Error fetching incidents:", error);
           setLoadingIncidents(false);
         }
       };
@@ -461,7 +474,7 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
 
           <LayersControl.BaseLayer name="Satelit">
             <TileLayer
-              attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+              attribution="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
               maxZoom={19}
               detectRetina={true}
@@ -477,13 +490,13 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
           onEachFeature={onEachFeature}
           key={`geojson-${selectedRegion?.properties?.id || "default"}`}
         />
-        
+
         {/* Marker Cluster Group */}
         <CrimeMarkerCluster incidents={incidents} />
-        
+
         <Legend />
       </MapContainer>
-      
+
       {loadingIncidents && (
         <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-md shadow-sm">
           <p className="text-xs text-slate-600 flex items-center gap-2">
@@ -492,7 +505,7 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
           </p>
         </div>
       )}
-      
+
       {/* Info tentang clustering */}
       <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-md shadow-sm">
         <p className="text-xs text-slate-600 font-medium">
@@ -502,7 +515,7 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
           Klik cluster untuk zoom, marker untuk detail
         </p>
       </div>
-      
+
       {/* Cluster controls info */}
       <div className="absolute bottom-16 left-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-md shadow-sm">
         <p className="text-xs text-slate-600 font-medium mb-1">
