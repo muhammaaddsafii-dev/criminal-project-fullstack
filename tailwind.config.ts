@@ -8,6 +8,10 @@ const config: Config = {
     "./src/components/ui/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/admin/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/admin/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/dashboard/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/dashboard/ui/*.{js,ts,jsx,tsx,mdx}"
   ],
   theme: {
     extend: {
@@ -46,6 +50,18 @@ const config: Config = {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))'
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
