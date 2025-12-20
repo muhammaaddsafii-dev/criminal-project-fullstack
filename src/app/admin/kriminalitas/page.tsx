@@ -1,12 +1,14 @@
 // src/app/kriminalitas/page.tsx
 'use client';
 
+import { useState } from 'react';
 import { FileWarning, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { DataTable } from '@/components/dashboard/DataTable';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
-import { crimeData, type CrimeData } from '@/lib/dashboard/data';
+import { crimeData as initialCrimeData, type CrimeData } from '@/lib/dashboard/data';
+import { useToast } from '../../../hooks/dashboard/use-toast';
 
 const columns = [
   { key: 'id' as keyof CrimeData, label: 'ID' },
@@ -27,10 +29,41 @@ const columns = [
 ];
 
 export default function KriminalitasPage() {
+  const [crimeData, setCrimeData] = useState(initialCrimeData);
+  // const { toast } = useToast(); // Uncomment jika sudah ada toast component
+
   const totalCases = crimeData.length;
   const completedCases = crimeData.filter((d) => d.status === 'Selesai').length;
   const inProgressCases = crimeData.filter((d) => d.status === 'Proses').length;
   const criticalCases = crimeData.filter((d) => d.tingkatBahaya === 'Kritis' || d.tingkatBahaya === 'Tinggi').length;
+
+  const handleView = (item: CrimeData) => {
+    console.log('Viewing item:', item);
+    // Bisa tambahkan logic tambahan di sini
+  };
+
+  const handleEdit = (item: CrimeData) => {
+    console.log('Editing item:', item);
+    // Bisa tambahkan logic tambahan di sini
+    // Misalnya: navigate ke halaman edit atau buka modal edit
+  };
+
+  const handleDelete = (id: string) => {
+    console.log('Deleting item with ID:', id);
+    
+    // Update state untuk remove item
+    setCrimeData(prevData => prevData.filter(item => item.id !== id));
+    
+    // Uncomment untuk menampilkan toast notification
+    // toast({
+    //   title: "Data berhasil dihapus",
+    //   description: `Data dengan ID ${id} telah dihapus dari sistem.`,
+    //   variant: "default",
+    // });
+
+    // Sementara gunakan alert
+    alert(`Data dengan ID ${id} berhasil dihapus! (Demo - refresh halaman untuk reset data)`);
+  };
 
   return (
     <DashboardLayout>
@@ -77,6 +110,9 @@ export default function KriminalitasPage() {
           searchKeys={['jenisKejadian', 'lokasi']}
           filterKey="status"
           filterOptions={['Selesai', 'Proses', 'Pending']}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </div>
     </DashboardLayout>
