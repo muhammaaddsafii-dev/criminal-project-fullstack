@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { DataTable } from '@/components/dashboard/DataTable';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
+import { AddCrimeForm } from '@/components/dashboard/AddCrimeForm';
 import { crimeData as initialCrimeData, type CrimeData } from '@/lib/dashboard/data';
 import { useToast } from '../../../hooks/dashboard/use-toast';
 
@@ -36,6 +37,20 @@ export default function KriminalitasPage() {
   const completedCases = crimeData.filter((d) => d.status === 'Selesai').length;
   const inProgressCases = crimeData.filter((d) => d.status === 'Proses').length;
   const criticalCases = crimeData.filter((d) => d.tingkatBahaya === 'Kritis' || d.tingkatBahaya === 'Tinggi').length;
+
+  const handleAdd = (newData: CrimeData) => {
+    setCrimeData(prevData => [newData, ...prevData]);
+    
+    // Uncomment untuk menampilkan toast notification
+    // toast({
+    //   title: "Data berhasil ditambahkan",
+    //   description: `Data ${newData.jenisKejadian} telah ditambahkan ke sistem.`,
+    //   variant: "default",
+    // });
+
+    // Sementara gunakan alert
+    alert(`Data ${newData.jenisKejadian} berhasil ditambahkan! (Demo - refresh halaman untuk reset data)`);
+  };
 
   const handleView = (item: CrimeData) => {
     console.log('Viewing item:', item);
@@ -68,9 +83,13 @@ export default function KriminalitasPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Data Kriminalitas</h1>
-          <p className="text-muted-foreground">Kelola dan pantau data kejadian kriminal</p>
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Data Kriminalitas</h1>
+            <p className="text-muted-foreground">Kelola dan pantau data kejadian kriminal</p>
+          </div>
+          <AddCrimeForm onAdd={handleAdd} />
         </div>
 
         {/* Stats */}
