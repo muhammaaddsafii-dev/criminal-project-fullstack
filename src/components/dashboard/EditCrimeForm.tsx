@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { X, Plus, AlertCircle, Upload, Trash2 } from 'lucide-react';
+import { X, Save, AlertCircle, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { MapPicker } from '@/components/dashboard/MapPicker';
 import {
@@ -29,21 +28,26 @@ import {
   getKecamatan,
   getDesa,
   getStatus,
-  createLaporanKejahatan,
+  updateLaporanKejahatan,
+  uploadPhoto,
+  deletePhoto,
   type JenisKejahatan,
   type NamaKejahatan,
   type Kecamatan,
   type Desa,
   type Status,
   type LaporanKejahatan,
+  type FotoLaporanKejahatan,
 } from '@/lib/api/crime';
 
-interface AddCrimeFormProps {
-  onAdd: (data: LaporanKejahatan) => void;
+interface EditCrimeFormProps {
+  data: LaporanKejahatan;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUpdate: (data: LaporanKejahatan) => void;
 }
 
-export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
-  const [open, setOpen] = useState(false);
+export function EditCrimeForm({ data, open, onOpenChange, onUpdate }: EditCrimeFormProps) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -54,23 +58,40 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
   const [desaList, setDesaList] = useState<Desa[]>([]);
   const [statusList, setStatusList] = useState<Status[]>([]);
   
+  // Extract coordinates from POINT string
+  const extractCoordinates = (lokasi: string | undefined) => {
+    if (!lokasi) return { lat: -7.7956, lng: 110.3695 };
+    const match = lokasi.match(/POINT \(([0-9.-]+) ([0-9.-]+)\)/);
+    if (match) {
+      return { lat: parseFloat(match[2]), lng: parseFloat(match[1]) };
+    }
+    return { lat: -7.7956, lng: 110.3695 };
+  };
+
+  const coords = extractCoordinates(data.lokasi);
+
   // Form data
   const [formData, setFormData] = useState({
-    nama_pelapor: '',
-    jenis_kejahatan: '',
-    nama_kejahatan: '',
-    tanggal_kejadian: '',
-    waktu_kejadian: '',
-    kecamatan: '',
-    desa: '',
-    alamat: '',
-    deskripsi: '',
-    status: '',
-    longitude: -7.7956,
-    latitude: 110.3695,
+    nama_pelapor: data.nama_pelapor,
+    jenis_kejahatan: data.jenis_kejahatan.toString(),
+    nama_kejahatan: data.nama_kejahatan.toString(),
+    tanggal_kejadian: data.tanggal_kejadian,
+    waktu_kejadian: data.waktu_kejadian,
+    kecamatan: data.kecamatan.toString(),
+    desa: data.desa.toString(),
+    alamat: data.alamat,
+    deskripsi: data.deskripsi,
+    status: data.status.toString(),
+    longitude: coords.lng,
+    latitude: coords.lat,
   });
   
-  const [photos, setPhotos] = useState<{ file: File; fileName: string; preview: string }[]>([]);
+  // Existing photos
+  const [existingPhotos, setExistingPhotos] = useState<FotoLaporanKejahatan[]>(data.foto || []);
+  const [photosToDelete, setPhotosToDelete] = useState<number[]>([]);
+  
+  // New photos
+  const [newPhotos, setNewPhotos] = useState<{ file: File; fileName: string; preview: string }[]>([]);
 
   // Load master data
   useEffect(() => {
@@ -83,9 +104,6 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
   useEffect(() => {
     if (formData.jenis_kejahatan) {
       loadNamaKejahatan(parseInt(formData.jenis_kejahatan));
-    } else {
-      setNamaKejahatanList([]);
-      setFormData(prev => ({ ...prev, nama_kejahatan: '' }));
     }
   }, [formData.jenis_kejahatan]);
 
@@ -93,9 +111,6 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
   useEffect(() => {
     if (formData.kecamatan) {
       loadDesa(parseInt(formData.kecamatan));
-    } else {
-      setDesaList([]);
-      setFormData(prev => ({ ...prev, desa: '' }));
     }
   }, [formData.kecamatan]);
 
@@ -110,6 +125,14 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
       setJenisKejahatanList(jenis);
       setKecamatanList(kecamatan);
       setStatusList(status);
+      
+      // Load dependent data
+      if (formData.jenis_kejahatan) {
+        await loadNamaKejahatan(parseInt(formData.jenis_kejahatan));
+      }
+      if (formData.kecamatan) {
+        await loadDesa(parseInt(formData.kecamatan));
+      }
     } catch (error) {
       console.error('Error loading master data:', error);
       alert('Gagal memuat data master');
@@ -161,11 +184,11 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
       return true;
     });
 
-    // Create previews and add to photos
+    // Create previews and add to new photos
     validFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPhotos(prev => [...prev, {
+        setNewPhotos(prev => [...prev, {
           file,
           fileName: file.name.split('.')[0], // filename without extension
           preview: e.target?.result as string
@@ -175,12 +198,17 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
     });
   };
 
-  const removePhoto = (index: number) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
+  const removeNewPhoto = (index: number) => {
+    setNewPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const markPhotoForDeletion = (photoId: number) => {
+    setPhotosToDelete(prev => [...prev, photoId]);
+    setExistingPhotos(prev => prev.filter(p => p.id !== photoId));
   };
 
   const updatePhotoFileName = (index: number, fileName: string) => {
-    setPhotos(prev => prev.map((photo, i) => 
+    setNewPhotos(prev => prev.map((photo, i) => 
       i === index ? { ...photo, fileName } : photo
     ));
   };
@@ -233,7 +261,8 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
     setLoading(true);
     
     try {
-      const data = {
+      // 1. Update laporan data
+      const updateData = {
         nama_pelapor: formData.nama_pelapor,
         jenis_kejahatan: parseInt(formData.jenis_kejahatan),
         nama_kejahatan: parseInt(formData.nama_kejahatan),
@@ -248,58 +277,46 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
         longitude: formData.longitude,
       };
 
-      const result = await createLaporanKejahatan(data, photos);
-      onAdd(result);
+      const updatedLaporan = await updateLaporanKejahatan(data.id, updateData);
       
-      // Reset form
-      resetForm();
-      setOpen(false);
-      alert('Data berhasil ditambahkan!');
+      // 2. Delete marked photos
+      if (photosToDelete.length > 0) {
+        await Promise.all(photosToDelete.map(photoId => deletePhoto(photoId)));
+      }
+      
+      // 3. Upload new photos
+      if (newPhotos.length > 0) {
+        await Promise.all(
+          newPhotos.map(photo => uploadPhoto(data.id, photo.file, photo.fileName))
+        );
+      }
+      
+      // 4. Fetch updated data with photos
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'}/laporan-kejahatan/${data.id}/`);
+      const finalData = await response.json();
+      
+      onUpdate(finalData);
+      onOpenChange(false);
+      alert('Data berhasil diupdate!');
+      
+      // Reset state
+      setPhotosToDelete([]);
+      setNewPhotos([]);
     } catch (error: any) {
-      console.error('Error creating laporan:', error);
-      alert(`Gagal menambahkan data: ${error.message}`);
+      console.error('Error updating laporan:', error);
+      alert(`Gagal mengupdate data: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      nama_pelapor: '',
-      jenis_kejahatan: '',
-      nama_kejahatan: '',
-      tanggal_kejadian: '',
-      waktu_kejadian: '',
-      kecamatan: '',
-      desa: '',
-      alamat: '',
-      deskripsi: '',
-      status: '',
-      longitude: -7.7956,
-      latitude: 110.3695,
-    });
-    setPhotos([]);
-    setErrors({});
-  };
-
-  const handleCancel = () => {
-    resetForm();
-    setOpen(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Tambah Data
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Tambah Data Kriminalitas</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Edit Data Kriminalitas</DialogTitle>
           <DialogDescription>
-            Masukkan informasi kejadian kriminal yang ingin ditambahkan ke sistem
+            Update informasi kejadian kriminal
           </DialogDescription>
         </DialogHeader>
         
@@ -326,7 +343,6 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
 
           {/* Jenis & Nama Kejahatan - Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Jenis Kejahatan */}
             <div className="space-y-2">
               <Label htmlFor="jenis_kejahatan" className="text-sm font-semibold">
                 Jenis Kejahatan <span className="text-destructive">*</span>
@@ -354,7 +370,6 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
               )}
             </div>
 
-            {/* Nama Kejahatan */}
             <div className="space-y-2">
               <Label htmlFor="nama_kejahatan" className="text-sm font-semibold">
                 Nama Kejahatan <span className="text-destructive">*</span>
@@ -386,7 +401,6 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
 
           {/* Tanggal & Waktu - Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Tanggal */}
             <div className="space-y-2">
               <Label htmlFor="tanggal_kejadian" className="text-sm font-semibold">
                 Tanggal Kejadian <span className="text-destructive">*</span>
@@ -406,7 +420,6 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
               )}
             </div>
 
-            {/* Waktu */}
             <div className="space-y-2">
               <Label htmlFor="waktu_kejadian" className="text-sm font-semibold">
                 Waktu Kejadian <span className="text-destructive">*</span>
@@ -429,7 +442,6 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
 
           {/* Kecamatan & Desa - Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Kecamatan */}
             <div className="space-y-2">
               <Label htmlFor="kecamatan" className="text-sm font-semibold">
                 Kecamatan <span className="text-destructive">*</span>
@@ -457,7 +469,6 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
               )}
             </div>
 
-            {/* Desa */}
             <div className="space-y-2">
               <Label htmlFor="desa" className="text-sm font-semibold">
                 Desa <span className="text-destructive">*</span>
@@ -566,10 +577,40 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
             )}
           </div>
 
-          {/* Upload Photos */}
+          {/* Existing Photos */}
+          {existingPhotos.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Foto Saat Ini</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {existingPhotos.map((photo) => (
+                  <div key={photo.id} className="relative group">
+                    <img
+                      src={photo.file_path}
+                      alt={photo.file_name}
+                      className="w-full h-24 object-cover rounded border"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => markPhotoForDeletion(photo.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">{photo.file_name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upload New Photos */}
           <div className="space-y-2">
             <Label htmlFor="photos" className="text-sm font-semibold">
-              Foto Kejadian (Opsional)
+              Tambah Foto Baru
             </Label>
             <div className="flex items-center gap-2">
               <Input
@@ -590,19 +631,19 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
                 Pilih Foto
               </Button>
               <span className="text-xs text-muted-foreground">
-                {photos.length} foto dipilih
+                {newPhotos.length} foto baru dipilih
               </span>
             </div>
             
-            {/* Photo Previews */}
-            {photos.length > 0 && (
+            {/* New Photo Previews */}
+            {newPhotos.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                {photos.map((photo, index) => (
+                {newPhotos.map((photo, index) => (
                   <div key={index} className="space-y-1">
                     <div className="relative group">
                       <img
                         src={photo.preview}
-                        alt={`Preview ${index + 1}`}
+                        alt={`New ${index + 1}`}
                         className="w-full h-24 object-cover rounded border"
                       />
                       <Button
@@ -610,7 +651,7 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
                         variant="destructive"
                         size="icon"
                         className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => removePhoto(index)}
+                        onClick={() => removeNewPhoto(index)}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -631,7 +672,7 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={handleCancel}
+              onClick={() => onOpenChange(false)}
               className="gap-2"
               disabled={loading}
             >
@@ -639,8 +680,8 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
               Batal
             </Button>
             <Button type="submit" className="gap-2" disabled={loading}>
-              <Plus className="h-4 w-4" />
-              {loading ? 'Menyimpan...' : 'Simpan Data'}
+              <Save className="h-4 w-4" />
+              {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
             </Button>
           </DialogFooter>
         </form>
