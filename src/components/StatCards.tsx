@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   TrendingUp,
@@ -27,7 +27,35 @@ interface StatCardsProps {
   stats: OverallStats;
 }
 
+interface ApiStats {
+  jumlah_laporan_kejahatan_approved: number;
+  jumlah_desa: number;
+  jumlah_pos_keamanan: number;
+  jumlah_cctv: number;
+}
+
 const StatCards: React.FC<StatCardsProps> = ({ stats }) => {
+  const [apiStats, setApiStats] = useState<ApiStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/statistik/");
+        const result = await response.json();
+        if (result.success) {
+          setApiStats(result.data);
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case "up":
@@ -42,7 +70,7 @@ const StatCards: React.FC<StatCardsProps> = ({ stats }) => {
   const cards = [
     {
       title: "Jumlah Kriminalitas",
-      value: stats.totalCases,
+      value: apiStats?.jumlah_laporan_kejahatan_approved ?? stats.totalCases,
       icon: <AlertTriangle className="w-5 h-5" />,
       color: "from-rose-500 to-rose-600",
       textColor: "text-rose-600",
@@ -50,7 +78,7 @@ const StatCards: React.FC<StatCardsProps> = ({ stats }) => {
     },
     {
       title: "Jumlah Desa",
-      value: stats.solvedCases,
+      value: apiStats?.jumlah_desa ?? stats.solvedCases,
       icon: <Home className="w-5 h-5" />,
       color: "from-emerald-500 to-emerald-600",
       textColor: "text-emerald-600",
@@ -58,7 +86,7 @@ const StatCards: React.FC<StatCardsProps> = ({ stats }) => {
     },
     {
       title: "Jumlah Pos Keamanan",
-      value: stats.pendingCases,
+      value: apiStats?.jumlah_pos_keamanan ?? stats.pendingCases,
       icon: <Shield className="w-5 h-5" />,
       color: "from-amber-500 to-amber-600",
       textColor: "text-amber-600",
@@ -66,7 +94,7 @@ const StatCards: React.FC<StatCardsProps> = ({ stats }) => {
     },
     {
       title: "Jumlah CCTV",
-      value: stats.clearanceRate,
+      value: apiStats?.jumlah_cctv ?? stats.clearanceRate,
       icon: <Camera className="w-5 h-5" />,
       color: "from-sky-500 to-sky-600",
       textColor: "text-sky-600",

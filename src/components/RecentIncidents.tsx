@@ -3,19 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bell, MapPin, Calendar, Loader2 } from "lucide-react";
-
-interface Incident {
-  id: number;
-  title: string;
-  location: string;
-  date: string;
-  type: string;
-  severity: string;
-}
+import { Bell, MapPin, Calendar, Loader2, AlertCircle } from "lucide-react";
+import { crimeAPI, formatDate, type LaporanKejahatan } from "@/lib/api";
 
 const RecentIncidents: React.FC = () => {
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [incidents, setIncidents] = useState<LaporanKejahatan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,21 +15,8 @@ const RecentIncidents: React.FC = () => {
     const fetchRecentIncidents = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/recent-incidents');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Format severity untuk kompatibilitas dengan komponen existing
-        const formattedData = data.map((incident: any) => ({
-          ...incident,
-          severity: mapSeverityLevel(incident.severity)
-        }));
-        
-        setIncidents(formattedData);
+        const data = await crimeAPI.getRecentIncidents(5);
+        setIncidents(data);
         setError(null);
       } catch (err) {
         console.error('Error fetching recent incidents:', err);
@@ -50,64 +29,51 @@ const RecentIncidents: React.FC = () => {
 
     fetchRecentIncidents();
     
-    // Refresh data setiap 30 detik untuk data real-time
+    // Refresh data setiap 30 detik
     const interval = setInterval(fetchRecentIncidents, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Map severity level dari database ke format yang digunakan komponen
-  const mapSeverityLevel = (severity: string): string => {
-    switch (severity) {
-      case 'HIGH':
-      case 'CRITICAL':
-        return 'high';
-      case 'MEDIUM':
-        return 'medium';
-      case 'LOW':
-        return 'low';
-      default:
-        return 'medium';
+  const getSeverityStyle = (jenisKejahatan: string) => {
+    const lowerCase = jenisKejahatan.toLowerCase();
+    if (lowerCase.includes('kekerasan') || lowerCase.includes('pembunuhan')) {
+      return "bg-red-100 text-red-700 border-red-200";
+    } else if (lowerCase.includes('narkotika') || lowerCase.includes('perampokan')) {
+      return "bg-orange-100 text-orange-700 border-orange-200";
+    } else if (lowerCase.includes('properti') || lowerCase.includes('pencurian')) {
+      return "bg-amber-100 text-amber-700 border-amber-200";
+    } else {
+      return "bg-green-100 text-green-700 border-green-200";
     }
   };
 
-  const getSeverityStyle = (severity: string) => {
-    switch (severity) {
-      case "high":
-        return "bg-red-100 text-red-700 border-red-200";
-      case "medium":
-        return "bg-amber-100 text-amber-700 border-amber-200";
-      case "low":
-        return "bg-green-100 text-green-700 border-green-200";
-      default:
-        return "bg-slate-100 text-slate-700 border-slate-200";
-    }
-  };
-
-  const getSeverityLabel = (severity: string) => {
-    switch (severity) {
-      case "high":
-        return "Kritis";
-      case "medium":
-        return "Sedang";
-      case "low":
-        return "Rendah";
-      default:
-        return "Sedang";
+  const getSeverityLabel = (jenisKejahatan: string) => {
+    const lowerCase = jenisKejahatan.toLowerCase();
+    if (lowerCase.includes('kekerasan') || lowerCase.includes('pembunuhan')) {
+      return "Kritis";
+    } else if (lowerCase.includes('narkotika') || lowerCase.includes('perampokan')) {
+      return "Tinggi";
+    } else if (lowerCase.includes('properti') || lowerCase.includes('pencurian')) {
+      return "Sedang";
+    } else {
+      return "Rendah";
     }
   };
 
   const getTypeColor = (type: string) => {
-    switch (type) {
-      case "Pencurian":
-        return "bg-blue-100 text-blue-700";
-      case "Perampokan":
-        return "bg-red-100 text-red-700";
-      case "Penipuan":
-        return "bg-purple-100 text-purple-700";
-      case "Kekerasan":
-        return "bg-orange-100 text-orange-700";
-      default:
-        return "bg-slate-100 text-slate-700";
+    const lowerCase = type.toLowerCase();
+    if (lowerCase.includes('pencurian')) {
+      return "bg-blue-100 text-blue-700";
+    } else if (lowerCase.includes('perampokan')) {
+      return "bg-red-100 text-red-700";
+    } else if (lowerCase.includes('penipuan')) {
+      return "bg-purple-100 text-purple-700";
+    } else if (lowerCase.includes('kekerasan')) {
+      return "bg-orange-100 text-orange-700";
+    } else if (lowerCase.includes('narkotika')) {
+      return "bg-pink-100 text-pink-700";
+    } else {
+      return "bg-slate-100 text-slate-700";
     }
   };
 
@@ -139,8 +105,15 @@ const RecentIncidents: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 overflow-auto px-4 pb-4 pt-2">
-          <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-slate-500">{error}</p>
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <AlertCircle className="w-8 h-8 text-red-400 mb-2" />
+            <p className="text-sm text-slate-600">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-2 text-xs text-blue-600 hover:text-blue-800"
+            >
+              Coba lagi
+            </button>
           </div>
         </CardContent>
       </Card>
@@ -154,11 +127,20 @@ const RecentIncidents: React.FC = () => {
           <Bell className="w-4 h-4 text-amber-500" />
           Insiden Terbaru
         </CardTitle>
+        <p className="text-xs text-slate-500 mt-1">
+          5 laporan terakhir yang telah disetujui
+        </p>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto px-4 pb-4 pt-2">
         {incidents.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-slate-500">Tidak ada data insiden</p>
+            <div className="text-center">
+              <Bell className="w-12 h-12 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-500">Tidak ada data insiden</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Belum ada laporan yang disetujui
+              </p>
+            </div>
           </div>
         ) : (
           <div className="space-y-2.5">
@@ -167,49 +149,46 @@ const RecentIncidents: React.FC = () => {
                 key={incident.id}
                 className="p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all"
               >
-                {/* Header with Title and Severity */}
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h4 className="text-sm font-medium text-slate-800 leading-tight flex-1 line-clamp-2">
-                    {incident.title || `Laporan #${incident.id}`}
+                    {incident.nama_kejahatan_nama}
                   </h4>
-                  <Badge
+                  {/* <Badge
                     className={`text-xs px-2 py-0.5 whitespace-nowrap flex-shrink-0 ${getSeverityStyle(
-                      incident.severity
+                      incident.jenis_kejahatan_nama
                     )}`}
                   >
-                    {getSeverityLabel(incident.severity)}
-                  </Badge>
+                    {getSeverityLabel(incident.jenis_kejahatan_nama)}
+                  </Badge> */}
                 </div>
 
-                {/* Type Badge */}
                 <div className="mb-2">
                   <Badge
                     className={`text-xs px-2 py-0.5 ${getTypeColor(
-                      incident.type
+                      incident.jenis_kejahatan_nama
                     )}`}
                   >
-                    {incident.type}
+                    {incident.jenis_kejahatan_nama}
                   </Badge>
                 </div>
 
-                {/* Location and Date Info */}
                 <div className="flex flex-col gap-1.5 text-xs text-slate-500">
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                     <span className="truncate">
-                      {incident.location || "Lokasi tidak tersedia"}
+                      {incident.desa_nama}, {incident.kecamatan_nama}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>
-                      {new Date(incident.date).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </span>
+                    <span>{formatDate(incident.tanggal_kejadian)}</span>
                   </div>
+                </div>
+
+                <div className="mt-2 pt-2 border-t border-slate-100">
+                  <p className="text-xs text-slate-500">
+                    Dilaporkan oleh: <span className="font-medium text-slate-700">{incident.nama_pelapor}</span>
+                  </p>
                 </div>
               </div>
             ))}

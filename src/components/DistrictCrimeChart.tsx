@@ -17,26 +17,14 @@ import {
 interface DistrictData {
   name: string;
   total: number;
-  critical?: number;
-  high?: number;
-  medium?: number;
-  low?: number;
-  last30Days?: number;
-  avgSeverity?: number;
   details?: {
-    total: number;
-    critical: number;
-    high: number;
-    medium: number;
-    low: number;
+    [key: string]: number;
   };
 }
 
 interface SummaryStats {
   totalDistricts: number;
   totalCrimes: number;
-  totalCritical: number;
-  totalLast30Days: number;
   avgCrimePerDistrict: number;
 }
 
@@ -50,15 +38,83 @@ const DistrictCrimeChart: React.FC = () => {
     const fetchDistrictStats = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/district-stats');
+        // Fetch all approved crime reports
+        const response = await fetch(
+          'http://127.0.0.1:8000/api/laporan-kejahatan/?is_approval=true'
+        );
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const result = await response.json();
-        setData(result.districts);
-        setSummary(result.summary);
+        const data = await response.json();
+        
+        // Fetch all pages
+        let allResults = [...data.results];
+        let nextUrl = data.next;
+        
+        while (nextUrl) {
+          const nextResponse = await fetch(nextUrl);
+          const nextData = await nextResponse.json();
+          allResults = [...allResults, ...nextData.results];
+          nextUrl = nextData.next;
+        }
+        
+        // Group by desa (village) and count occurrences
+        const districtMap = new Map<string, {
+          count: number;
+          types: Map<string, number>;
+        }>();
+        
+        allResults.forEach((item: any) => {
+          const district = item.desa_nama;
+          const crimeType = item.jenis_kejahatan_nama;
+          
+          if (!districtMap.has(district)) {
+            districtMap.set(district, {
+              count: 0,
+              types: new Map()
+            });
+          }
+          
+          const districtData = districtMap.get(district)!;
+          districtData.count++;
+          districtData.types.set(
+            crimeType, 
+            (districtData.types.get(crimeType) || 0) + 1
+          );
+        });
+        
+        // Convert to array and sort by count
+        const districtArray: DistrictData[] = Array.from(districtMap.entries())
+          .map(([name, data]) => {
+            const details: { [key: string]: number } = {};
+            data.types.forEach((count, type) => {
+              details[type] = count;
+            });
+            
+            return {
+              name,
+              total: data.count,
+              details
+            };
+          })
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 5); // Get top 5 districts
+        
+        // Calculate summary statistics
+        const totalCrimes = allResults.length;
+        const totalDistricts = districtMap.size;
+        const avgCrimePerDistrict = totalDistricts > 0 
+          ? totalCrimes / totalDistricts 
+          : 0;
+        
+        setData(districtArray);
+        setSummary({
+          totalDistricts,
+          totalCrimes,
+          avgCrimePerDistrict
+        });
         setError(null);
       } catch (err) {
         console.error('Error fetching district stats:', err);
@@ -77,7 +133,7 @@ const DistrictCrimeChart: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Warna gradient untuk bar chart berdasarkan severity
+  // Warna gradient untuk bar chart
   const getBarColor = (index: number) => {
     const colors = [
       "#ef4444", // red-500 - untuk area dengan crime tertinggi
@@ -111,50 +167,15 @@ const DistrictCrimeChart: React.FC = () => {
             </div>
             
             {district.details && (
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                  <span>Kritis:</span>
-                  <span className="font-semibold ml-auto">{district.details.critical || 0}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                  <span>Tinggi:</span>
-                  <span className="font-semibold ml-auto">{district.details.high || 0}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                  <span>Sedang:</span>
-                  <span className="font-semibold ml-auto">{district.details.medium || 0}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span>Rendah:</span>
-                  <span className="font-semibold ml-auto">{district.details.low || 0}</span>
-                </div>
-              </div>
-            )}
-            
-            {district.last30Days !== undefined && (
               <div className="pt-2 mt-2 border-t border-slate-100">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-600">30 Hari Terakhir:</span>
-                  <span className="text-xs font-bold text-blue-600">{district.last30Days}</span>
-                </div>
-              </div>
-            )}
-            
-            {district.avgSeverity && (
-              <div className="pt-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-600">Rata Severity:</span>
-                  <span className={`text-xs font-bold ${
-                    district.avgSeverity >= 3 ? 'text-red-600' :
-                    district.avgSeverity >= 2 ? 'text-orange-600' :
-                    district.avgSeverity >= 1 ? 'text-yellow-600' : 'text-green-600'
-                  }`}>
-                    {district.avgSeverity.toFixed(1)}
-                  </span>
+                <p className="text-xs font-medium text-slate-600 mb-2">Detail per Jenis:</p>
+                <div className="space-y-1">
+                  {Object.entries(district.details).map(([type, count]: [string, any]) => (
+                    <div key={type} className="flex justify-between items-center text-xs">
+                      <span className="text-slate-600 truncate pr-2">{type}:</span>
+                      <span className="font-semibold text-slate-800">{count}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -216,7 +237,7 @@ const DistrictCrimeChart: React.FC = () => {
         <CardContent className="flex-1 px-4 pb-4 pt-2 flex flex-col items-center justify-center text-center">
           <BarChart3 className="w-12 h-12 text-slate-300 mb-2" />
           <p className="text-sm text-slate-500">Belum ada data kriminalitas</p>
-          <p className="text-xs text-slate-400 mt-1">Tidak ada kejadian yang tercatat di wilayah manapun</p>
+          <p className="text-xs text-slate-400 mt-1">Tidak ada laporan yang disetujui di wilayah manapun</p>
         </CardContent>
       </Card>
     );
@@ -230,25 +251,13 @@ const DistrictCrimeChart: React.FC = () => {
             <BarChart3 className="w-4 h-4 text-blue-500" />
             Top Kriminalitas per Wilayah
           </CardTitle>
-          {/* {summary && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                {summary.totalDistricts} wilayah
-              </span>
-              <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                {summary.totalCrimes} kasus
-              </span>
-            </div>
-          )} */}
         </div>
         {summary && (
           <div className="mt-2 text-xs text-slate-500">
-            <p>Menampilkan {data.length} wilayah dengan kasus terbanyak</p>
-            {summary.totalLast30Days > 0 && (
-              <p className="mt-1">
-                <span className="text-blue-600 font-medium">{summary.totalLast30Days} kasus</span> dalam 30 hari terakhir
-              </p>
-            )}
+            {/* <p>Menampilkan {data.length} desa dengan kasus terbanyak dari {summary.totalDistricts} total desa</p> */}
+            <p className="mt-1">
+              <span className="text-blue-600 font-medium">{summary.totalCrimes} kasus</span> telah dilaporkan dan disetujui
+            </p>
           </div>
         )}
       </CardHeader>
@@ -296,7 +305,7 @@ const DistrictCrimeChart: React.FC = () => {
           <div className="mt-4 pt-4 border-t border-slate-100">
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div className="bg-red-50 p-2 rounded">
-                <div className="font-medium text-red-700">Wilayah Paling Rawan</div>
+                <div className="font-medium text-red-700">Desa Paling Rawan</div>
                 <div className="font-bold text-red-800 truncate">{data[0]?.name || '-'}</div>
                 <div className="text-red-600">{data[0]?.total || 0} kasus</div>
               </div>
@@ -310,7 +319,7 @@ const DistrictCrimeChart: React.FC = () => {
                 <div className="font-bold text-slate-800">
                   {Math.round(summary.avgCrimePerDistrict)}
                 </div>
-                <div className="text-slate-600">kasus per wilayah</div>
+                <div className="text-slate-600">kasus per desa</div>
               </div>
             </div>
           </div>

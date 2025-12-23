@@ -1,3 +1,4 @@
+//src/components/CrimeTable.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -23,40 +24,66 @@ import { TableIcon, Search, Loader2 } from "lucide-react";
 
 interface CrimeData {
   id: number;
-  district: string;
-  type: string;
-  location: string;
-  date: string;
-  severity: string; // Changed from status to severity
-  reportNumber: string;
+  nama_pelapor: string;
+  jenis_kejahatan_nama: string;
+  nama_kejahatan_nama: string;
+  kecamatan_nama: string;
+  desa_nama: string;
+  status_nama: string;
+  tanggal_kejadian: string;
+  waktu_kejadian: string;
+  alamat: string;
+  deskripsi: string;
+  is_approval: boolean;
+  created_at: string;
+}
+
+interface ApiResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CrimeData[];
+}
+
+interface DropdownItem {
+  id: number;
+  nama: string;
 }
 
 const CrimeTable: React.FC = () => {
   const [data, setData] = useState<CrimeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterDistrict, setFilterDistrict] = useState("all");
-  const [filterSeverity, setFilterSeverity] = useState("all");
-  const [filterType, setFilterType] = useState("all");
-  const [districts, setDistricts] = useState<string[]>([]);
-  const [types, setTypes] = useState<string[]>([]);
+  const [filterDesa, setFilterDesa] = useState("all");
+  const [filterJenisKejahatan, setFilterJenisKejahatan] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [desaList, setDesaList] = useState<DropdownItem[]>([]);
+  const [jenisKejahatanList, setJenisKejahatanList] = useState<DropdownItem[]>([]);
+  const [statusList, setStatusList] = useState<DropdownItem[]>([]);
+
+  // Base URL untuk API Django
+  const API_BASE_URL = "http://127.0.0.1:8000/api";
 
   // Fungsi untuk mengambil data dari API
   const fetchData = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
+      
+      // Filter hanya yang sudah diapprove
+      params.append('is_approval', 'true');
+      
       if (searchTerm) params.append('search', searchTerm);
-      if (filterDistrict !== 'all') params.append('district', filterDistrict);
-      if (filterSeverity !== 'all') params.append('severity', filterSeverity);
-      if (filterType !== 'all') params.append('type', filterType);
+      if (filterDesa !== 'all') params.append('desa_id', filterDesa);
+      if (filterJenisKejahatan !== 'all') params.append('jenis_kejahatan_id', filterJenisKejahatan);
+      if (filterStatus !== 'all') params.append('status_id', filterStatus);
       
       console.log('Fetching data with params:', params.toString());
       
-      const response = await fetch(`/api/crime-data?${params.toString()}`);
-      const result = await response.json();
+      const response = await fetch(`${API_BASE_URL}/laporan-kejahatan/?${params.toString()}`);
+      const result: ApiResponse = await response.json();
       console.log('API Response:', result);
-      setData(result.data || []);
+      setData(result.results || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
@@ -65,40 +92,93 @@ const CrimeTable: React.FC = () => {
     }
   };
 
-  // Fungsi untuk mengambil daftar wilayah
-  const fetchDistricts = async () => {
+  // Fungsi untuk mengambil daftar Desa
+  const fetchDesaList = async () => {
     try {
-      console.log('Fetching districts...');
-      const response = await fetch('/api/districts');
+      console.log('Fetching desa list...');
+      const response = await fetch(`${API_BASE_URL}/desa/`);
       const result = await response.json();
-      console.log('Districts API Response:', result);
+      console.log('Desa API Response:', result);
       
-      // Pastikan result adalah array dan tidak undefined
-      if (Array.isArray(result)) {
-        const districtNames = result
-          .filter((item: any) => item && item.district) // Filter out null/undefined
-          .map((item: any) => item.district);
-        setDistricts(districtNames);
-        console.log('Extracted district names:', districtNames);
+      if (result.results && Array.isArray(result.results)) {
+        const desaNames = result.results
+          .filter((item: any) => item && item.nama)
+          .map((item: any) => ({ id: item.id, nama: item.nama }));
+        setDesaList(desaNames);
+        console.log('Extracted desa list:', desaNames);
+      } else if (Array.isArray(result)) {
+        const desaNames = result
+          .filter((item: any) => item && item.nama)
+          .map((item: any) => ({ id: item.id, nama: item.nama }));
+        setDesaList(desaNames);
+        console.log('Extracted desa list:', desaNames);
       } else {
-        console.error('Districts API did not return an array:', result);
-        setDistricts([]);
+        console.error('Desa API did not return expected format:', result);
+        setDesaList([]);
       }
     } catch (error) {
-      console.error('Error fetching districts:', error);
-      setDistricts([]);
+      console.error('Error fetching desa:', error);
+      setDesaList([]);
     }
   };
 
-  // Fungsi untuk mengambil daftar jenis kejahatan dari tabel types
-  const fetchTypes = async () => {
+  // Fungsi untuk mengambil daftar Jenis Kejahatan
+  const fetchJenisKejahatanList = async () => {
     try {
-      const response = await fetch('/api/crime-types');
+      console.log('Fetching jenis kejahatan list...');
+      const response = await fetch(`${API_BASE_URL}/jenis-kejahatan/`);
       const result = await response.json();
-      setTypes(result || []);
+      console.log('Jenis Kejahatan API Response:', result);
+      
+      if (result.results && Array.isArray(result.results)) {
+        const jenisNames = result.results
+          .filter((item: any) => item && item.nama_jenis_kejahatan)
+          .map((item: any) => ({ id: item.id, nama: item.nama_jenis_kejahatan }));
+        setJenisKejahatanList(jenisNames);
+        console.log('Extracted jenis kejahatan list:', jenisNames);
+      } else if (Array.isArray(result)) {
+        const jenisNames = result
+          .filter((item: any) => item && item.nama_jenis_kejahatan)
+          .map((item: any) => ({ id: item.id, nama: item.nama_jenis_kejahatan }));
+        setJenisKejahatanList(jenisNames);
+        console.log('Extracted jenis kejahatan list:', jenisNames);
+      } else {
+        console.error('Jenis Kejahatan API did not return expected format:', result);
+        setJenisKejahatanList([]);
+      }
     } catch (error) {
-      console.error('Error fetching crime types:', error);
-      setTypes([]);
+      console.error('Error fetching jenis kejahatan:', error);
+      setJenisKejahatanList([]);
+    }
+  };
+
+  // Fungsi untuk mengambil daftar Status
+  const fetchStatusList = async () => {
+    try {
+      console.log('Fetching status list...');
+      const response = await fetch(`${API_BASE_URL}/status/`);
+      const result = await response.json();
+      console.log('Status API Response:', result);
+      
+      if (result.results && Array.isArray(result.results)) {
+        const statusNames = result.results
+          .filter((item: any) => item && item.nama)
+          .map((item: any) => ({ id: item.id, nama: item.nama }));
+        setStatusList(statusNames);
+        console.log('Extracted status list:', statusNames);
+      } else if (Array.isArray(result)) {
+        const statusNames = result
+          .filter((item: any) => item && item.nama)
+          .map((item: any) => ({ id: item.id, nama: item.nama }));
+        setStatusList(statusNames);
+        console.log('Extracted status list:', statusNames);
+      } else {
+        console.error('Status API did not return expected format:', result);
+        setStatusList([]);
+      }
+    } catch (error) {
+      console.error('Error fetching status:', error);
+      setStatusList([]);
     }
   };
 
@@ -108,56 +188,46 @@ const CrimeTable: React.FC = () => {
       fetchData();
     }, 300); // Debounce 300ms
     return () => clearTimeout(timer);
-  }, [searchTerm, filterDistrict, filterSeverity, filterType]);
+  }, [searchTerm, filterDesa, filterJenisKejahatan, filterStatus]);
 
-  // Load districts dan types saat komponen mount
+  // Load desa, jenis kejahatan, dan status saat komponen mount
   useEffect(() => {
-    fetchDistricts();
-    fetchTypes();
+    fetchDesaList();
+    fetchJenisKejahatanList();
+    fetchStatusList();
   }, []);
 
-  const getSeverityStyle = (severity: string) => {
-    switch (severity) {
-      case "LOW":
-        return "bg-green-100 text-green-800";
-      case "MEDIUM":
+  const getStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "dilaporkan":
+        return "bg-blue-100 text-blue-800";
+      case "dalam proses":
         return "bg-yellow-100 text-yellow-800";
-      case "HIGH":
+      case "ditindaklanjuti":
         return "bg-orange-100 text-orange-800";
-      case "CRITICAL":
+      case "selesai":
+        return "bg-green-100 text-green-800";
+      case "ditolak":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getTypeStyle = (type: string) => {
-    switch (type) {
-      case "Pencurian":
+  const getJenisKejahatanStyle = (jenis: string) => {
+    switch (jenis.toLowerCase()) {
+      case "kejahatan properti":
         return "bg-blue-100 text-blue-700";
-      case "Perampokan":
+      case "kejahatan kekerasan":
         return "bg-red-100 text-red-700";
-      case "Penipuan":
+      case "kejahatan narkotika":
         return "bg-purple-100 text-purple-700";
-      case "Kekerasan":
-        return "bg-orange-100 text-orange-700";
+      case "kejahatan seksual":
+        return "bg-pink-100 text-pink-700";
+      case "kejahatan white collar":
+        return "bg-indigo-100 text-indigo-700";
       default:
         return "bg-slate-100 text-slate-700";
-    }
-  };
-
-  const getSeverityLabel = (severity: string) => {
-    switch (severity) {
-      case "LOW":
-        return "Rendah";
-      case "MEDIUM":
-        return "Sedang";
-      case "HIGH":
-        return "Tinggi";
-      case "CRITICAL":
-        return "Kritis";
-      default:
-        return severity;
     }
   };
 
@@ -177,54 +247,55 @@ const CrimeTable: React.FC = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="Cari lokasi/no. laporan..."
+                placeholder="Cari nama/alamat/deskripsi..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 w-[220px] h-9 text-sm"
               />
             </div>
 
-            {/* Filter District */}
-            <Select value={filterDistrict} onValueChange={setFilterDistrict}>
+            {/* Filter Desa */}
+            <Select value={filterDesa} onValueChange={setFilterDesa}>
               <SelectTrigger className="w-[160px] h-9 text-sm">
-                <SelectValue placeholder="Semua Wilayah" />
+                <SelectValue placeholder="Semua Desa" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Wilayah</SelectItem>
-                {districts.map((district) => (
-                  <SelectItem key={district} value={district}>
-                    {district}
+                <SelectItem value="all">Semua Desa</SelectItem>
+                {desaList.map((desa) => (
+                  <SelectItem key={desa.id} value={desa.id.toString()}>
+                    {desa.nama}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            {/* Filter Type */}
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[160px] h-9 text-sm">
-                <SelectValue placeholder="Semua Jenis" />
+            {/* Filter Jenis Kejahatan */}
+            <Select value={filterJenisKejahatan} onValueChange={setFilterJenisKejahatan}>
+              <SelectTrigger className="w-[180px] h-9 text-sm">
+                <SelectValue placeholder="Semua Jenis Kejahatan" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Jenis</SelectItem>
-                {types.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
+                <SelectItem value="all">Semua Jenis Kejahatan</SelectItem>
+                {jenisKejahatanList.map((jenis) => (
+                  <SelectItem key={jenis.id} value={jenis.id.toString()}>
+                    {jenis.nama}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            {/* Filter Severity */}
-            <Select value={filterSeverity} onValueChange={setFilterSeverity}>
+            {/* Filter Status */}
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[160px] h-9 text-sm">
-                <SelectValue placeholder="Semua Severity" />
+                <SelectValue placeholder="Semua Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Severity</SelectItem>
-                <SelectItem value="LOW">Rendah</SelectItem>
-                <SelectItem value="MEDIUM">Sedang</SelectItem>
-                <SelectItem value="HIGH">Tinggi</SelectItem>
-                <SelectItem value="CRITICAL">Kritis</SelectItem>
+                <SelectItem value="all">Semua Status</SelectItem>
+                {statusList.map((status) => (
+                  <SelectItem key={status.id} value={status.id.toString()}>
+                    {status.nama}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -244,23 +315,26 @@ const CrimeTable: React.FC = () => {
               <Table>
                 <TableHeader className="bg-slate-100">
                   <TableRow>
-                    <TableHead className="font-semibold text-slate-700 w-[140px]">
-                      No. Laporan
+                    <TableHead className="font-semibold text-slate-700 w-[150px]">
+                      Nama Pelapor
                     </TableHead>
                     <TableHead className="font-semibold text-slate-700 w-[140px]">
-                      Wilayah
+                      Desa
                     </TableHead>
-                    <TableHead className="font-semibold text-slate-700 w-[130px]">
-                      Jenis
+                    <TableHead className="font-semibold text-slate-700 w-[180px]">
+                      Jenis Kejahatan
+                    </TableHead>
+                    <TableHead className="font-semibold text-slate-700 w-[180px]">
+                      Nama Kejahatan
                     </TableHead>
                     <TableHead className="font-semibold text-slate-700 w-[200px]">
-                      Lokasi
+                      Alamat
                     </TableHead>
                     <TableHead className="font-semibold text-slate-700 w-[130px]">
-                      Tanggal
+                      Tanggal Kejadian
                     </TableHead>
-                    <TableHead className="font-semibold text-slate-700 w-[110px]">
-                      Severity
+                    <TableHead className="font-semibold text-slate-700 w-[130px]">
+                      Status
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -276,38 +350,39 @@ const CrimeTable: React.FC = () => {
                           key={item.id}
                           className="hover:bg-slate-50 transition-colors"
                         >
-                          <TableCell className="font-mono text-xs text-slate-600 w-[140px]">
-                            {item.reportNumber}
+                          <TableCell className="font-medium text-slate-700 w-[150px]">
+                            {item.nama_pelapor}
                           </TableCell>
-                          <TableCell className="font-medium text-slate-700 w-[140px]">
-                            {item.district}
+                          <TableCell className="text-slate-600 w-[140px]">
+                            {item.desa_nama}
                           </TableCell>
-                          <TableCell className="w-[130px]">
+                          <TableCell className="w-[180px]">
                             <Badge
                               variant="secondary"
-                              className={`${getTypeStyle(item.type)} font-medium`}
+                              className={`${getJenisKejahatanStyle(item.jenis_kejahatan_nama)} font-medium`}
                             >
-                              {item.type}
+                              {item.jenis_kejahatan_nama}
                             </Badge>
                           </TableCell>
+                          <TableCell className="text-slate-600 w-[180px]">
+                            {item.nama_kejahatan_nama}
+                          </TableCell>
                           <TableCell className="text-slate-600 w-[200px]">
-                            {item.location}
+                            {item.alamat}
                           </TableCell>
                           <TableCell className="text-slate-600 w-[130px]">
-                            {new Date(item.date).toLocaleDateString("id-ID", {
+                            {new Date(item.tanggal_kejadian).toLocaleDateString("id-ID", {
                               day: "numeric",
                               month: "short",
                               year: "numeric",
                             })}
                           </TableCell>
-                          <TableCell className="w-[110px]">
+                          <TableCell className="w-[130px]">
                             <Badge
                               variant="secondary"
-                              className={`${getSeverityStyle(
-                                item.severity
-                              )} font-medium`}
+                              className={`${getStatusStyle(item.status_nama)} font-medium`}
                             >
-                              {getSeverityLabel(item.severity)}
+                              {item.status_nama}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -315,7 +390,7 @@ const CrimeTable: React.FC = () => {
                     ) : (
                       <TableRow>
                         <TableCell
-                          colSpan={6}
+                          colSpan={7}
                           className="text-center py-8 text-slate-500"
                         >
                           Tidak ada data yang ditemukan
@@ -329,7 +404,7 @@ const CrimeTable: React.FC = () => {
 
             {/* Footer dengan jumlah data */}
             <div className="text-sm text-slate-600">
-              Menampilkan {data.length} data
+              Menampilkan {data.length} data laporan yang telah disetujui
             </div>
           </>
         )}
