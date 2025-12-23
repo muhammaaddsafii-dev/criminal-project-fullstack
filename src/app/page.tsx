@@ -1,3 +1,4 @@
+//src/app/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -8,6 +9,9 @@ import TopCrimeTypes from "@/components/TopCrimeTypes";
 import DistrictCrimeChart from "@/components/DistrictCrimeChart";
 import RegionModal from "@/components/RegionModal";
 import CrimeTable from "@/components/CrimeTable";
+import { AddCrimeForm } from "@/components/dashboard/EmbedAddCrimeForm";
+import { AddOtherCrimeForm } from "@/components/dashboard/EmbedAddOtherCrimeForm";
+import type { LaporanKejahatan } from "@/lib/api/crime";
 import {
   geoJsonData,
   crimeStatsByDistrict,
@@ -40,10 +44,17 @@ export default function Home() {
     setIsModalOpen(false);
   };
 
+  const handleAdd = (newLaporan: LaporanKejahatan) => {
+    // Handle successful addition
+    console.log("Data baru ditambahkan:", newLaporan);
+    // You can add logic here to refresh data or show a success message
+    // For example: reload the page data, update state, etc.
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header - Responsive */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-[1000]">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-3">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -61,6 +72,12 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+              {/* Button Tambah Data */}
+
+              <AddOtherCrimeForm onAdd={handleAdd} />
+
+              <AddCrimeForm onAdd={handleAdd} />
+
               {/* Button Dashboard - Responsive */}
               <Link
                 href="/dashboard"
