@@ -147,7 +147,7 @@ export function DataTable<T extends { id: string }>({
       <div className="space-y-4 animate-fade-in">
         {/* Search and Filter */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
+          {/* <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Cari..."
@@ -158,7 +158,7 @@ export function DataTable<T extends { id: string }>({
               }}
               className="pl-10"
             />
-          </div>
+          </div> */}
           {filterKey && filterOptions.length > 0 && (
             <Select
               value={filter}
