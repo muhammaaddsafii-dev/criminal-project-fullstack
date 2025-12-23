@@ -2,11 +2,12 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import { X, Save, AlertCircle, Upload, Trash2, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -85,6 +86,7 @@ export function EditCrimeForm({ data, open, onOpenChange, onUpdate }: EditCrimeF
     status: data.status.toString(),
     longitude: coords.lng,
     latitude: coords.lat,
+    is_approval: data.is_approval,
   });
   
   // Existing photos
@@ -276,6 +278,7 @@ export function EditCrimeForm({ data, open, onOpenChange, onUpdate }: EditCrimeF
         status: parseInt(formData.status),
         latitude: formData.latitude,
         longitude: formData.longitude,
+        is_approval: formData.is_approval,
       };
 
       const updatedLaporan = await updateLaporanKejahatan(data.id, updateData);
@@ -576,6 +579,31 @@ export function EditCrimeForm({ data, open, onOpenChange, onUpdate }: EditCrimeF
                 <span>{errors.status}</span>
               </div>
             )}
+          </div>
+
+          {/* Approval Status */}
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2 rounded-md border p-4 hover:bg-accent/50 transition-colors">
+              <Checkbox
+                id="is_approval"
+                checked={formData.is_approval}
+                onCheckedChange={(checked) => handleChange('is_approval', checked === true)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="is_approval"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  Setujui Laporan (Approval)
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {formData.is_approval 
+                    ? "Laporan ini sudah disetujui dan akan ditampilkan di dashboard publik" 
+                    : "Centang untuk menyetujui laporan ini"}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Existing Photos */}

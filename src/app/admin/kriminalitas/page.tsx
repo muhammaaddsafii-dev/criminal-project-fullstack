@@ -22,7 +22,7 @@ interface CrimeData {
   jenisKejadian: string;
   lokasi: string;
   tanggal: string;
-  status: 'Selesai' | 'Proses' | 'Pending';
+  isApproval: boolean;
   tingkatBahaya: 'Rendah' | 'Sedang' | 'Tinggi' | 'Kritis';
   rawData: LaporanKejahatan;
 }
@@ -33,9 +33,11 @@ const columns = [
   { key: 'lokasi' as keyof CrimeData, label: 'Lokasi' },
   { key: 'tanggal' as keyof CrimeData, label: 'Tanggal' },
   {
-    key: 'status' as keyof CrimeData,
-    label: 'Status',
-    render: (item: CrimeData) => <StatusBadge status={item.status} />,
+    key: 'isApproval' as keyof CrimeData,
+    label: 'Status Approval',
+    render: (item: CrimeData) => (
+      <StatusBadge status={item.isApproval ? 'Approved' : 'Pending'} />
+    ),
   },
   {
     key: 'tingkatBahaya' as keyof CrimeData,
@@ -44,20 +46,6 @@ const columns = [
   },
   { key: 'actions' as const, label: 'Aksi' },
 ];
-
-// Helper function to map status
-const mapStatus = (statusNama: string): 'Selesai' | 'Proses' | 'Pending' => {
-  const statusMap: Record<string, 'Selesai' | 'Proses' | 'Pending'> = {
-    'Selesai': 'Selesai',
-    'Ditutup': 'Selesai',
-    'Proses': 'Proses',
-    'Dalam Proses': 'Proses',
-    'Sedang Ditangani': 'Proses',
-    'Dilaporkan': 'Pending',
-    'Pending': 'Pending',
-  };
-  return statusMap[statusNama] || 'Pending';
-};
 
 // Helper function to determine danger level based on crime type
 const getDangerLevel = (jenisKejahatan: string): 'Rendah' | 'Sedang' | 'Tinggi' | 'Kritis' => {
@@ -82,7 +70,7 @@ const transformLaporanToDisplay = (laporan: LaporanKejahatan): CrimeData => {
     jenisKejadian: laporan.nama_kejahatan_nama,
     lokasi: `${laporan.desa_nama}, ${laporan.kecamatan_nama}`,
     tanggal: new Date(laporan.tanggal_kejadian).toLocaleDateString('id-ID'),
-    status: mapStatus(laporan.status_nama),
+    isApproval: laporan.is_approval,
     tingkatBahaya: getDangerLevel(laporan.jenis_kejahatan_nama),
     rawData: laporan,
   };
@@ -99,8 +87,8 @@ export default function KriminalitasPage() {
 
   // Stats
   const totalCases = crimeData.length;
-  const completedCases = crimeData.filter((d) => d.status === 'Selesai').length;
-  const inProgressCases = crimeData.filter((d) => d.status === 'Proses').length;
+  const approvedCases = crimeData.filter((d) => d.isApproval).length;
+  const pendingCases = crimeData.filter((d) => !d.isApproval).length;
   const criticalCases = crimeData.filter((d) => d.tingkatBahaya === 'Kritis' || d.tingkatBahaya === 'Tinggi').length;
 
   // Load data on mount
@@ -223,15 +211,15 @@ export default function KriminalitasPage() {
             variant="primary"
           />
           <StatsCard
-            title="Kasus Selesai"
-            value={completedCases}
+            title="Kasus Disetujui"
+            value={approvedCases}
             icon={CheckCircle}
             trend={{ value: 8, isPositive: true }}
             variant="success"
           />
           <StatsCard
-            title="Dalam Proses"
-            value={inProgressCases}
+            title="Menunggu Approval"
+            value={pendingCases}
             icon={Clock}
             variant="warning"
           />
@@ -248,8 +236,6 @@ export default function KriminalitasPage() {
           data={crimeData}
           columns={columns}
           searchKeys={['jenisKejadian', 'lokasi']}
-          filterKey="status"
-          filterOptions={['Selesai', 'Proses', 'Pending']}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
