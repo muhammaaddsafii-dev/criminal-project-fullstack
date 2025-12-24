@@ -56,11 +56,43 @@ const handleResponse = async (response: Response) => {
   return response.json();
 };
 
-// Desa APIs (untuk dropdown)
+// ✅ Helper function untuk fetch semua pages (pagination)
+const fetchAllPages = async <T>(url: string): Promise<T[]> => {
+  const allResults: T[] = [];
+  let nextUrl: string | null = url;
+
+  while (nextUrl) {
+    try {
+      const response: Response = await fetch(nextUrl);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      const result: any = await response.json();
+      
+      // Jika response adalah paginated
+      if (result.results && Array.isArray(result.results)) {
+        allResults.push(...result.results);
+        nextUrl = result.next; // null jika sudah halaman terakhir
+      } else if (Array.isArray(result)) {
+        // Jika response langsung array (non-paginated)
+        allResults.push(...result);
+        nextUrl = null;
+      } else {
+        // Format tidak dikenali
+        console.error('Unexpected API format:', result);
+        nextUrl = null;
+      }
+    } catch (error) {
+      console.error('Error fetching page:', error);
+      nextUrl = null;
+    }
+  }
+
+  return allResults;
+};
+
+// ✅ DIPERBAIKI: Desa APIs (untuk dropdown) - Fetch semua data
 export const getDesa = async (): Promise<Desa[]> => {
-  const response = await fetch(`${API_BASE_URL}/desa/`);
-  const data = await handleResponse(response);
-  return data.results || data;
+  return fetchAllPages<Desa>(`${API_BASE_URL}/desa/`);
 };
 
 // Pos Keamanan APIs

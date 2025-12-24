@@ -64,6 +64,40 @@ const CrimeTable: React.FC = () => {
   // Base URL untuk API Django
   const API_BASE_URL = "http://127.0.0.1:8000/api";
 
+  // ✅ HELPER: Fungsi untuk fetch semua pages (pagination)
+  const fetchAllPages = async <T extends any>(url: string): Promise<T[]> => {
+    const allResults: T[] = [];
+    let nextUrl: string | null = url;
+
+    while (nextUrl) {
+      try {
+        const response: Response = await fetch(nextUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const result: any = await response.json();
+        
+        // Jika response adalah paginated
+        if (result.results && Array.isArray(result.results)) {
+          allResults.push(...result.results);
+          nextUrl = result.next; // null jika sudah halaman terakhir
+        } else if (Array.isArray(result)) {
+          // Jika response langsung array (non-paginated)
+          allResults.push(...result);
+          nextUrl = null;
+        } else {
+          // Format tidak dikenali
+          console.error('Unexpected API format:', result);
+          nextUrl = null;
+        }
+      } catch (error) {
+        console.error('Error fetching page:', error);
+        nextUrl = null;
+      }
+    }
+
+    return allResults;
+  };
+
   // Fungsi untuk mengambil data dari API
   const fetchData = async () => {
     setLoading(true);
@@ -92,90 +126,54 @@ const CrimeTable: React.FC = () => {
     }
   };
 
-  // Fungsi untuk mengambil daftar Desa
+  // ✅ DIPERBAIKI: Fungsi untuk mengambil SEMUA Desa (dengan pagination)
   const fetchDesaList = async () => {
     try {
       console.log('Fetching desa list...');
-      const response = await fetch(`${API_BASE_URL}/desa/`);
-      const result = await response.json();
-      console.log('Desa API Response:', result);
+      const allDesa = await fetchAllPages<any>(`${API_BASE_URL}/desa/`);
       
-      if (result.results && Array.isArray(result.results)) {
-        const desaNames = result.results
-          .filter((item: any) => item && item.nama)
-          .map((item: any) => ({ id: item.id, nama: item.nama }));
-        setDesaList(desaNames);
-        console.log('Extracted desa list:', desaNames);
-      } else if (Array.isArray(result)) {
-        const desaNames = result
-          .filter((item: any) => item && item.nama)
-          .map((item: any) => ({ id: item.id, nama: item.nama }));
-        setDesaList(desaNames);
-        console.log('Extracted desa list:', desaNames);
-      } else {
-        console.error('Desa API did not return expected format:', result);
-        setDesaList([]);
-      }
+      const desaNames = allDesa
+        .filter((item: any) => item && item.nama)
+        .map((item: any) => ({ id: item.id, nama: item.nama }));
+      
+      setDesaList(desaNames);
+      console.log(`Loaded ${desaNames.length} desa:`, desaNames);
     } catch (error) {
       console.error('Error fetching desa:', error);
       setDesaList([]);
     }
   };
 
-  // Fungsi untuk mengambil daftar Jenis Kejahatan
+  // ✅ DIPERBAIKI: Fungsi untuk mengambil SEMUA Jenis Kejahatan (dengan pagination)
   const fetchJenisKejahatanList = async () => {
     try {
       console.log('Fetching jenis kejahatan list...');
-      const response = await fetch(`${API_BASE_URL}/jenis-kejahatan/`);
-      const result = await response.json();
-      console.log('Jenis Kejahatan API Response:', result);
+      const allJenis = await fetchAllPages<any>(`${API_BASE_URL}/jenis-kejahatan/`);
       
-      if (result.results && Array.isArray(result.results)) {
-        const jenisNames = result.results
-          .filter((item: any) => item && item.nama_jenis_kejahatan)
-          .map((item: any) => ({ id: item.id, nama: item.nama_jenis_kejahatan }));
-        setJenisKejahatanList(jenisNames);
-        console.log('Extracted jenis kejahatan list:', jenisNames);
-      } else if (Array.isArray(result)) {
-        const jenisNames = result
-          .filter((item: any) => item && item.nama_jenis_kejahatan)
-          .map((item: any) => ({ id: item.id, nama: item.nama_jenis_kejahatan }));
-        setJenisKejahatanList(jenisNames);
-        console.log('Extracted jenis kejahatan list:', jenisNames);
-      } else {
-        console.error('Jenis Kejahatan API did not return expected format:', result);
-        setJenisKejahatanList([]);
-      }
+      const jenisNames = allJenis
+        .filter((item: any) => item && item.nama_jenis_kejahatan)
+        .map((item: any) => ({ id: item.id, nama: item.nama_jenis_kejahatan }));
+      
+      setJenisKejahatanList(jenisNames);
+      console.log(`Loaded ${jenisNames.length} jenis kejahatan:`, jenisNames);
     } catch (error) {
       console.error('Error fetching jenis kejahatan:', error);
       setJenisKejahatanList([]);
     }
   };
 
-  // Fungsi untuk mengambil daftar Status
+  // ✅ DIPERBAIKI: Fungsi untuk mengambil SEMUA Status (dengan pagination)
   const fetchStatusList = async () => {
     try {
       console.log('Fetching status list...');
-      const response = await fetch(`${API_BASE_URL}/status/`);
-      const result = await response.json();
-      console.log('Status API Response:', result);
+      const allStatus = await fetchAllPages<any>(`${API_BASE_URL}/status/`);
       
-      if (result.results && Array.isArray(result.results)) {
-        const statusNames = result.results
-          .filter((item: any) => item && item.nama)
-          .map((item: any) => ({ id: item.id, nama: item.nama }));
-        setStatusList(statusNames);
-        console.log('Extracted status list:', statusNames);
-      } else if (Array.isArray(result)) {
-        const statusNames = result
-          .filter((item: any) => item && item.nama)
-          .map((item: any) => ({ id: item.id, nama: item.nama }));
-        setStatusList(statusNames);
-        console.log('Extracted status list:', statusNames);
-      } else {
-        console.error('Status API did not return expected format:', result);
-        setStatusList([]);
-      }
+      const statusNames = allStatus
+        .filter((item: any) => item && item.nama)
+        .map((item: any) => ({ id: item.id, nama: item.nama }));
+      
+      setStatusList(statusNames);
+      console.log(`Loaded ${statusNames.length} status:`, statusNames);
     } catch (error) {
       console.error('Error fetching status:', error);
       setStatusList([]);
@@ -260,7 +258,7 @@ const CrimeTable: React.FC = () => {
                 <SelectValue placeholder="Semua Desa" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Desa</SelectItem>
+                <SelectItem value="all">Semua Desa ({desaList.length})</SelectItem>
                 {desaList.map((desa) => (
                   <SelectItem key={desa.id} value={desa.id.toString()}>
                     {desa.nama}

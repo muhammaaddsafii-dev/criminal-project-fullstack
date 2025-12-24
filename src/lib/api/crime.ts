@@ -96,48 +96,64 @@ const handleResponse = async (response: Response) => {
   return response.json();
 };
 
-// Jenis Kejahatan APIs
-export const getJenisKejahatan = async (): Promise<JenisKejahatan[]> => {
-  const response = await fetch(`${API_BASE_URL}/jenis-kejahatan/`);
-  const data = await handleResponse(response);
-  return data.results || data;
+// ✅ PERBAIKAN: Helper function untuk fetch semua pages (pagination)
+const fetchAllPages = async <T>(url: string): Promise<T[]> => {
+  const allResults: T[] = [];
+  let nextUrl: string | null = url;
+
+  while (nextUrl) {
+    const response = await fetch(nextUrl);
+    const data = await handleResponse(response);
+    
+    // Jika response adalah paginated
+    if (data.results && Array.isArray(data.results)) {
+      allResults.push(...data.results);
+      nextUrl = data.next;
+    } else if (Array.isArray(data)) {
+      // Jika response langsung array (non-paginated)
+      allResults.push(...data);
+      nextUrl = null;
+    } else {
+      // Response format tidak dikenali
+      nextUrl = null;
+    }
+  }
+
+  return allResults;
 };
 
-// Nama Kejahatan APIs
+// ✅ DIPERBAIKI: Jenis Kejahatan APIs - Fetch semua data
+export const getJenisKejahatan = async (): Promise<JenisKejahatan[]> => {
+  return fetchAllPages<JenisKejahatan>(`${API_BASE_URL}/jenis-kejahatan/`);
+};
+
+// ✅ DIPERBAIKI: Nama Kejahatan APIs - Fetch semua data
 export const getNamaKejahatan = async (jenisKejahatanId?: number): Promise<NamaKejahatan[]> => {
   const url = jenisKejahatanId 
     ? `${API_BASE_URL}/nama-kejahatan/?jenis_kejahatan_id=${jenisKejahatanId}`
     : `${API_BASE_URL}/nama-kejahatan/`;
-  const response = await fetch(url);
-  const data = await handleResponse(response);
-  return data.results || data;
+  return fetchAllPages<NamaKejahatan>(url);
 };
 
-// Kecamatan APIs
+// ✅ DIPERBAIKI: Kecamatan APIs - Fetch semua data
 export const getKecamatan = async (): Promise<Kecamatan[]> => {
-  const response = await fetch(`${API_BASE_URL}/kecamatan/`);
-  const data = await handleResponse(response);
-  return data.results || data;
+  return fetchAllPages<Kecamatan>(`${API_BASE_URL}/kecamatan/`);
 };
 
-// Desa APIs
+// ✅ DIPERBAIKI: Desa APIs - Fetch semua data
 export const getDesa = async (kecamatanId?: number): Promise<Desa[]> => {
   const url = kecamatanId 
     ? `${API_BASE_URL}/desa/?kecamatan_id=${kecamatanId}`
     : `${API_BASE_URL}/desa/`;
-  const response = await fetch(url);
-  const data = await handleResponse(response);
-  return data.results || data;
+  return fetchAllPages<Desa>(url);
 };
 
-// Status APIs
+// ✅ DIPERBAIKI: Status APIs - Fetch semua data
 export const getStatus = async (): Promise<Status[]> => {
-  const response = await fetch(`${API_BASE_URL}/status/`);
-  const data = await handleResponse(response);
-  return data.results || data;
+  return fetchAllPages<Status>(`${API_BASE_URL}/status/`);
 };
 
-// Laporan Kejahatan APIs
+// Laporan Kejahatan APIs (ini tetap paginated karena memang butuh pagination di UI)
 export const getLaporanKejahatan = async (
   params?: {
     page?: number;

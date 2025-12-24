@@ -66,8 +66,8 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
     alamat: '',
     deskripsi: '',
     status: '',
-    longitude: -7.7956,
-    latitude: 110.3695,
+    longitude: -2.820756,
+    latitude: 122.138217,
   });
   
   const [photos, setPhotos] = useState<{ file: File; fileName: string; preview: string }[]>([]);
@@ -275,8 +275,8 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
       alamat: '',
       deskripsi: '',
       status: '',
-      longitude: -7.7956,
-      latitude: 110.3695,
+      longitude: -2.820756,
+      latitude: 122.138217,
     });
     setPhotos([]);
     setErrors({});

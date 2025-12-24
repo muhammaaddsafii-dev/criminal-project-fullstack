@@ -12,7 +12,11 @@ interface MapPickerProps {
 }
 
 export function MapPicker({ value, onChange }: MapPickerProps) {
-  const [position, setPosition] = useState(value || { lat: -7.7956, lng: 110.3695 }); // Yogyakarta default
+  // const [position, setPosition] = useState(value || { lat: -2.820756, lng: 122.138217 }); // default -2.820756, 122.138217
+  const [position, setPosition] = useState(
+    value || { lat: -2.5450, lng: 121.9695 } // Morowali
+  );
+
   const [address, setAddress] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const mapRef = useRef<HTMLDivElement>(null);
@@ -47,7 +51,11 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
     if (!L) return;
 
     // Initialize map
-    const map = L.map(mapRef.current).setView([position.lat, position.lng], 13);
+    // const map = L.map(mapRef.current).setView([position.lat, position.lng], 5);
+    const map = L.map(mapRef.current).setView(
+      [-2.5450, 121.9695], // Morowali
+      10 // zoom lebih dekat
+    );
 
     // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -56,7 +64,11 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
     }).addTo(map);
 
     // Add marker
-    const marker = L.marker([position.lat, position.lng], {
+    // const marker = L.marker([position.lat, position.lng], {
+    //   draggable: true,
+    // }).addTo(map);
+
+    const marker = L.marker([-2.5450, 121.9695], {
       draggable: true,
     }).addTo(map);
 
@@ -105,7 +117,7 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`
       );
       const data = await response.json();
-      
+
       if (data && data.length > 0) {
         const result = data[0];
         const newPosition = { lat: parseFloat(result.lat), lng: parseFloat(result.lon) };
@@ -129,18 +141,18 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const newPosition = { 
-            lat: pos.coords.latitude, 
-            lng: pos.coords.longitude 
+          const newPosition = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
           };
           setPosition(newPosition);
           onChange(newPosition);
-          
+
           if (mapInstanceRef.current && markerRef.current) {
             mapInstanceRef.current.setView([newPosition.lat, newPosition.lng], 15);
             markerRef.current.setLatLng([newPosition.lat, newPosition.lng]);
           }
-          
+
           reverseGeocode(newPosition);
         },
         (error) => {
@@ -154,7 +166,7 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
   return (
     <div className="space-y-3">
       <Label className="text-sm font-semibold">Pilih Lokasi Kejadian</Label>
-      
+
       {/* Search Box */}
       <div className="flex gap-2">
         <Input
@@ -172,8 +184,8 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
       </div>
 
       {/* Map Container */}
-      <div 
-        ref={mapRef} 
+      <div
+        ref={mapRef}
         className="h-64 w-full rounded-lg border border-border overflow-hidden"
         style={{ zIndex: 0 }}
       />

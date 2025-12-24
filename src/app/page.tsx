@@ -12,14 +12,8 @@ import CrimeTable from "@/components/CrimeTable";
 import { AddCrimeForm } from "@/components/dashboard/EmbedAddCrimeForm";
 import { AddOtherCrimeForm } from "@/components/dashboard/EmbedAddOtherCrimeForm";
 import type { LaporanKejahatan } from "@/lib/api/crime";
-import {
-  geoJsonData,
-  crimeStatsByDistrict,
-  overallStats,
-  crimeTableData,
-} from "@/data/mockData";
-import { MapPin, Shield, Settings, Database } from "lucide-react";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import { overallStats } from "@/data/mockData";
+import { Shield, Database } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const CrimeMap = dynamic(() => import("@/components/CrimeMap"), {
@@ -73,9 +67,7 @@ export default function Home() {
 
             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
               {/* Button Tambah Data */}
-
               <AddOtherCrimeForm onAdd={handleAdd} />
-
               <AddCrimeForm onAdd={handleAdd} />
 
               {/* Button Dashboard - Responsive */}
@@ -100,8 +92,6 @@ export default function Home() {
         {/* Dashboard Grid Layout - Responsive untuk semua device */}
         <div className="grid grid-cols-1 xl:grid-cols-10 gap-4 sm:gap-6 mb-4 sm:mb-6">
           {/* Left Column - Recent Incidents (Full) */}
-          {/* Mobile & Tablet: Full width */}
-          {/* Desktop: Sidebar kiri (20%) full height */}
           <div className="xl:col-span-2">
             <div className="h-[400px] sm:h-[500px] md:h-[600px] xl:h-[750px] overflow-y-auto">
               <RecentIncidents />
@@ -109,9 +99,6 @@ export default function Home() {
           </div>
 
           {/* Center Column - Map */}
-          {/* Mobile: Full width, tinggi 400px */}
-          {/* Tablet: Full width, tinggi 500px */}
-          {/* Desktop: 60% width, tinggi 750px */}
           <div className="xl:col-span-6 h-[400px] sm:h-[500px] md:h-[600px] xl:h-[750px]">
             <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 h-full">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -128,8 +115,8 @@ export default function Home() {
                 className="rounded-xl overflow-hidden"
                 style={{ height: "calc(100% - 50px)" }}
               >
+                {/* FIXED: Hapus prop geoJsonData */}
                 <CrimeMap
-                  geoJsonData={geoJsonData}
                   onRegionClick={handleRegionClick}
                   selectedRegion={selectedRegion}
                 />
@@ -138,8 +125,6 @@ export default function Home() {
           </div>
 
           {/* Right Column - District Chart & Top Crime Types */}
-          {/* Mobile & Tablet: Stack secara horizontal */}
-          {/* Desktop: Sidebar kanan (20%) */}
           <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
             <div className="h-[300px] sm:h-[350px] xl:h-[365px]">
               <DistrictCrimeChart />
@@ -171,16 +156,11 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Region Detail Modal */}
+      {/* Region Detail Modal - FIXED: Hapus prop crimeStats */}
       <RegionModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         regionData={selectedRegion}
-        crimeStats={
-          selectedRegion
-            ? crimeStatsByDistrict[selectedRegion.properties.id]
-            : null
-        }
       />
     </div>
   );
