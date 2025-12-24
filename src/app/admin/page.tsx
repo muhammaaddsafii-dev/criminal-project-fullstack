@@ -46,6 +46,13 @@ const quickLinks = [
     description: 'Kelola pengguna sistem',
     color: 'bg-warning/10 text-warning'
   },
+  { 
+    path: '/admin/kejadian-lainnya', 
+    label: 'Kejadian Lainnya', 
+    icon: Clock,
+    description: 'Kelola kejadian lainnya',
+    color: 'bg-warning/10 text-warning'
+  },
 ];
 
 export default function DashboardPage() {

@@ -9,7 +9,10 @@ import {
   Shield, 
   Users, 
   LayoutDashboard,
-  Menu
+  Menu,
+  ClipboardPlus,
+  Landmark,
+  House
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +26,9 @@ const menuItems = [
   { path: '/admin/kriminalitas', label: 'Data Kriminalitas', icon: FileWarning },
   { path: '/admin/cctv', label: 'Data CCTV', icon: Video },
   { path: '/admin/pos-keamanan', label: 'Data Pos Keamanan', icon: Shield },
+  { path: '/admin/kejadian-lainnya', label: 'Kejadian Lainnya', icon: ClipboardPlus },
+  { path: '/admin/kecamatan', label: 'Kecamatan', icon: Landmark },
+  { path: '/admin/desa', label: 'Desa', icon: House },
   { path: '/admin/users', label: 'List Users', icon: Users },
 ];
 

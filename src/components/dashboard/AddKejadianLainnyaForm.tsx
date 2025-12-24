@@ -32,11 +32,11 @@ import { getDesa, type Desa } from '@/lib/api/desa';
 import { getStatus, type Status } from '@/lib/api/crime';
 import { MapPicker } from '@/components/dashboard/MapPicker';
 
-interface AddOtherCrimeFormProps {
+interface AddKejadianLainnyaFormProps {
   onAdd: (newKejadian: KejadianLainnya) => void;
 }
 
-export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
+export function AddKejadianLainnyaForm({ onAdd }: AddKejadianLainnyaFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   

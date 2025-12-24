@@ -1,12 +1,13 @@
-// src/components/dashboard/AddKejadianLainnyaForm.tsx
+// src/components/dashboard/EditKejadianLainnyaForm.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Upload, X } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -21,10 +22,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  createKejadianLainnya,
+  updateKejadianLainnya,
+  uploadPhoto,
+  deletePhoto,
+  toggleApprovalKejadianLainnya,
   type KejadianLainnya,
 } from '@/lib/api/kejadian-lainnya';
 import { getKecamatan, type Kecamatan } from '@/lib/api/kecamatan';
@@ -32,43 +35,85 @@ import { getDesa, type Desa } from '@/lib/api/desa';
 import { getStatus, type Status } from '@/lib/api/crime';
 import { MapPicker } from '@/components/dashboard/MapPicker';
 
-interface AddOtherCrimeFormProps {
-  onAdd: (newKejadian: KejadianLainnya) => void;
+interface EditKejadianLainnyaFormProps {
+  data: KejadianLainnya;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUpdate: (updatedKejadian: KejadianLainnya) => void;
 }
 
-export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
-  const [open, setOpen] = useState(false);
+export function EditKejadianLainnyaForm({ data, open, onOpenChange, onUpdate }: EditKejadianLainnyaFormProps) {
   const [loading, setLoading] = useState(false);
   
   const [kecamatanList, setKecamatanList] = useState<Kecamatan[]>([]);
   const [desaList, setDesaList] = useState<Desa[]>([]);
   const [statusList, setStatusList] = useState<Status[]>([]);
-  const [photos, setPhotos] = useState<{ file: File; preview: string; fileName: string }[]>([]);
-  const [location, setLocation] = useState<{ lat: number; lng: number } | undefined>();
+  const [existingPhotos, setExistingPhotos] = useState(data.foto);
+  const [newPhotos, setNewPhotos] = useState<{ file: File; preview: string; fileName: string }[]>([]);
+  const [isApproved, setIsApproved] = useState(data.is_approval);
+  
+  // Parse location from data if exists
+  const initialLocation = data.lokasi ? (() => {
+    try {
+      const coords = data.lokasi.split(',').map(c => parseFloat(c.trim()));
+      if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+        return { lat: coords[0], lng: coords[1] };
+      }
+    } catch (e) {
+      console.error('Error parsing location:', e);
+    }
+    return undefined;
+  })() : undefined;
+  
+  const [location, setLocation] = useState<{ lat: number; lng: number } | undefined>(initialLocation);
 
   const [formData, setFormData] = useState({
-    nama_pelapor: '',
-    nama_kejadian: '',
-    deskripsi_kejadian: '',
-    tanggal_kejadian: '',
-    waktu_kejadian: '',
-    kecamatan: '',
-    desa: '',
-    status: '',
+    nama_pelapor: data.nama_pelapor,
+    nama_kejadian: data.nama_kejadian,
+    deskripsi_kejadian: data.deskripsi_kejadian,
+    tanggal_kejadian: data.tanggal_kejadian,
+    waktu_kejadian: data.waktu_kejadian,
+    kecamatan: data.kecamatan.toString(),
+    desa: data.desa.toString(),
+    status: data.status.toString(),
   });
 
   useEffect(() => {
     if (open) {
       loadMasterData();
+      setFormData({
+        nama_pelapor: data.nama_pelapor,
+        nama_kejadian: data.nama_kejadian,
+        deskripsi_kejadian: data.deskripsi_kejadian,
+        tanggal_kejadian: data.tanggal_kejadian,
+        waktu_kejadian: data.waktu_kejadian,
+        kecamatan: data.kecamatan.toString(),
+        desa: data.desa.toString(),
+        status: data.status.toString(),
+      });
+      setExistingPhotos(data.foto);
+      setNewPhotos([]);
+      setIsApproved(data.is_approval);
+      
+      // Reset location from data
+      const loc = data.lokasi ? (() => {
+        try {
+          const coords = data.lokasi.split(',').map(c => parseFloat(c.trim()));
+          if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+            return { lat: coords[0], lng: coords[1] };
+          }
+        } catch (e) {
+          console.error('Error parsing location:', e);
+        }
+        return undefined;
+      })() : undefined;
+      setLocation(loc);
     }
-  }, [open]);
+  }, [data, open]);
 
   useEffect(() => {
     if (formData.kecamatan) {
       loadDesa(parseInt(formData.kecamatan));
-    } else {
-      setDesaList([]);
-      setFormData(prev => ({ ...prev, desa: '' }));
     }
   }, [formData.kecamatan]);
 
@@ -110,26 +155,37 @@ export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
     }
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNewPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    const newPhotos = Array.from(files).map((file) => ({
+    const photos = Array.from(files).map((file) => ({
       file,
       preview: URL.createObjectURL(file),
       fileName: file.name,
     }));
 
-    setPhotos((prev) => [...prev, ...newPhotos]);
+    setNewPhotos((prev) => [...prev, ...photos]);
   };
 
-  const removePhoto = (index: number) => {
-    setPhotos((prev) => {
-      const newPhotos = [...prev];
-      URL.revokeObjectURL(newPhotos[index].preview);
-      newPhotos.splice(index, 1);
-      return newPhotos;
+  const removeNewPhoto = (index: number) => {
+    setNewPhotos((prev) => {
+      const photos = [...prev];
+      URL.revokeObjectURL(photos[index].preview);
+      photos.splice(index, 1);
+      return photos;
     });
+  };
+
+  const handleDeleteExistingPhoto = async (photoId: number) => {
+    if (!confirm('Hapus foto ini?')) return;
+    
+    try {
+      await deletePhoto(photoId);
+      setExistingPhotos((prev) => prev.filter((p) => p.id !== photoId));
+    } catch (error: any) {
+      alert(`Gagal menghapus foto: ${error.message}`);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,7 +194,7 @@ export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
     try {
       setLoading(true);
       
-      const dataToSubmit: any = {
+      const dataToUpdate: any = {
         nama_pelapor: formData.nama_pelapor,
         nama_kejadian: formData.nama_kejadian,
         deskripsi_kejadian: formData.deskripsi_kejadian,
@@ -149,55 +205,58 @@ export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
         status: parseInt(formData.status),
       };
 
+      // Add location if available
       if (location) {
-        dataToSubmit.longitude = location.lng;
-        dataToSubmit.latitude = location.lat;
+        dataToUpdate.longitude = location.lng;
+        dataToUpdate.latitude = location.lat;
       }
       
-      const newKejadian = await createKejadianLainnya(
-        dataToSubmit,
-        photos.map(p => ({ file: p.file, fileName: p.fileName }))
-      );
+      // Update kejadian
+      await updateKejadianLainnya(data.id, dataToUpdate);
       
-      onAdd(newKejadian);
-      setOpen(false);
+      // Update approval status if changed
+      if (isApproved !== data.is_approval) {
+        await toggleApprovalKejadianLainnya(data.id, isApproved);
+      }
       
-      // Reset form
-      setFormData({
-        nama_pelapor: '',
-        nama_kejadian: '',
-        deskripsi_kejadian: '',
-        tanggal_kejadian: '',
-        waktu_kejadian: '',
-        kecamatan: '',
-        desa: '',
-        status: '',
-      });
-      setPhotos([]);
-      setLocation(undefined);
+      // Upload new photos
+      if (newPhotos.length > 0) {
+        await Promise.all(
+          newPhotos.map((photo) =>
+            uploadPhoto(data.id, photo.file, photo.fileName)
+          )
+        );
+      }
       
-      alert('Data kejadian berhasil ditambahkan!');
+      // Fetch updated data
+      const updatedKejadian = {
+        ...data,
+        ...formData,
+        kecamatan: parseInt(formData.kecamatan),
+        desa: parseInt(formData.desa),
+        status: parseInt(formData.status),
+        is_approval: isApproved,
+      } as KejadianLainnya;
+      
+      onUpdate(updatedKejadian);
+      onOpenChange(false);
+      
+      alert('Data kejadian berhasil diperbarui!');
     } catch (error: any) {
-      console.error('Error creating kejadian:', error);
-      alert(`Gagal menambahkan data: ${error.message}`);
+      console.error('Error updating kejadian:', error);
+      alert(`Gagal memperbarui data: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Tambah Kejadian
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tambah Data Kejadian Lainnya</DialogTitle>
+          <DialogTitle>Edit Data Kejadian Lainnya</DialogTitle>
           <DialogDescription>
-            Isi formulir di bawah untuk menambahkan data kejadian lainnya
+            Ubah informasi kejadian di bawah ini
           </DialogDescription>
         </DialogHeader>
         
@@ -261,10 +320,10 @@ export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
             <Label htmlFor="kecamatan">Kecamatan *</Label>
             <Select
               value={formData.kecamatan}
-              onValueChange={(value) => setFormData({ ...formData, kecamatan: value })}
+              onValueChange={(value) => setFormData({ ...formData, kecamatan: value, desa: '' })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Pilih Kecamatan" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {kecamatanList.map((kec) => (
@@ -281,10 +340,9 @@ export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
             <Select
               value={formData.desa}
               onValueChange={(value) => setFormData({ ...formData, desa: value })}
-              disabled={!formData.kecamatan}
             >
               <SelectTrigger>
-                <SelectValue placeholder={!formData.kecamatan ? "Pilih kecamatan dulu" : "Pilih Desa"} />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {desaList.map((desa) => (
@@ -303,7 +361,7 @@ export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
               onValueChange={(value) => setFormData({ ...formData, status: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Pilih Status" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {statusList.map((status) => (
@@ -315,45 +373,86 @@ export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
             </Select>
           </div>
 
+          {/* Approval Toggle */}
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+            <div className="space-y-0.5">
+              <Label htmlFor="approval">Status Approval</Label>
+              <p className="text-sm text-muted-foreground">
+                {isApproved ? 'Kejadian telah disetujui' : 'Kejadian menunggu persetujuan'}
+              </p>
+            </div>
+            <Switch
+              id="approval"
+              checked={isApproved}
+              onCheckedChange={setIsApproved}
+            />
+          </div>
+
           {/* Map Picker for Location */}
           <MapPicker
             value={location}
             onChange={setLocation}
           />
 
+          {/* Existing Photos */}
+          {existingPhotos.length > 0 && (
+            <div className="space-y-2">
+              <Label>Foto Saat Ini</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {existingPhotos.map((photo) => (
+                  <div key={photo.id} className="relative group">
+                    <img
+                      src={photo.file_path}
+                      alt={photo.file_name}
+                      className="w-full h-24 object-cover rounded border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteExistingPhoto(photo.id)}
+                      className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* New Photos */}
           <div className="space-y-2">
-            <Label>Foto (Opsional)</Label>
+            <Label>Tambah Foto Baru</Label>
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => document.getElementById('photo-upload')?.click()}
+                onClick={() => document.getElementById('new-photo-upload')?.click()}
                 className="w-full"
               >
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Foto
               </Button>
               <input
-                id="photo-upload"
+                id="new-photo-upload"
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={handlePhotoChange}
+                onChange={handleNewPhotoChange}
                 className="hidden"
               />
             </div>
-            {photos.length > 0 && (
+            {newPhotos.length > 0 && (
               <div className="grid grid-cols-3 gap-2 mt-2">
-                {photos.map((photo, index) => (
+                {newPhotos.map((photo, index) => (
                   <div key={index} className="relative group">
                     <img
                       src={photo.preview}
-                      alt={`Preview ${index + 1}`}
+                      alt={`New ${index + 1}`}
                       className="w-full h-24 object-cover rounded border"
                     />
                     <button
                       type="button"
-                      onClick={() => removePhoto(index)}
+                      onClick={() => removeNewPhoto(index)}
                       className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="h-3 w-3" />
@@ -368,13 +467,13 @@ export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
               disabled={loading}
             >
               Batal
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Menyimpan...' : 'Simpan'}
+              {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
             </Button>
           </DialogFooter>
         </form>

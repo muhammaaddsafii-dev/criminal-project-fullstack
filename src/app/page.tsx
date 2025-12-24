@@ -45,6 +45,12 @@ export default function Home() {
     // For example: reload the page data, update state, etc.
   };
 
+  const handleAddOtherCrime = (newKejadian: any) => {
+    // Handle successful addition for other crime form
+    console.log("Data kejadian lainnya ditambahkan:", newKejadian);
+    // You can add logic here to refresh data or show a success message
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header - Responsive */}
@@ -67,7 +73,7 @@ export default function Home() {
 
             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
               {/* Button Tambah Data */}
-              <AddOtherCrimeForm onAdd={handleAdd} />
+              <AddOtherCrimeForm onAdd={handleAddOtherCrime} />
               <AddCrimeForm onAdd={handleAdd} />
 
               {/* Button Dashboard - Responsive */}
