@@ -193,7 +193,7 @@ export default function CCTVPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">ID</TableHead>
+                {/* <TableHead className="w-[50px]">ID</TableHead> */}
                 <TableHead>Nama Lokasi</TableHead>
                 <TableHead>Kecamatan</TableHead>
                 <TableHead>Desa</TableHead>
@@ -217,7 +217,7 @@ export default function CCTVPage() {
               ) : (
                 data.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.id}</TableCell>
+                    {/* <TableCell className="font-medium">{item.id}</TableCell> */}
                     <TableCell>{item.nama_lokasi}</TableCell>
                     <TableCell>{item.kecamatan_nama}</TableCell>
                     <TableCell>{item.desa_nama}</TableCell>

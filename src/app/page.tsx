@@ -78,7 +78,7 @@ export default function Home() {
 
               {/* Button Dashboard - Responsive */}
               <Link
-                href="/dashboard"
+                href="/admin"
                 className="inline-flex items-center justify-center gap-1 sm:gap-1.5 md:gap-2 px-2 py-1.5 sm:px-3 sm:py-1.5 md:px-4 md:py-2 text-[10px] sm:text-xs md:text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded-md transition-colors whitespace-nowrap"
               >
                 <Database className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 flex-shrink-0" />

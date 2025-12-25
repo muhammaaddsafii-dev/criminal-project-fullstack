@@ -1,6 +1,8 @@
-// app/layout.tsx
+// src/app/layout.tsx - UPDATED VERSION
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 export const metadata: Metadata = {
   title: "Crime Dashboard - Peta Kriminalitas Morowali",
@@ -35,11 +37,12 @@ export default function RootLayout({
         ></script>
       </head>
 
-
-
-
       <body className="antialiased" suppressHydrationWarning>
-        {children}
+        <AuthProvider>
+          <ProtectedRoute>
+            {children}
+          </ProtectedRoute>
+        </AuthProvider>
       </body>
     </html>
   );

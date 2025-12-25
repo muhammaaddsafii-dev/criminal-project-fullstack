@@ -1,4 +1,4 @@
-// src/app/dashboard/page.tsx
+//src/app/admin/page.tsx
 'use client';
 
 import { 
@@ -39,13 +39,13 @@ const quickLinks = [
     description: 'Kelola pos dan petugas',
     color: 'bg-success/10 text-success'
   },
-  { 
-    path: '/admin/users', 
-    label: 'List Users', 
-    icon: Users,
-    description: 'Kelola pengguna sistem',
-    color: 'bg-warning/10 text-warning'
-  },
+  // { 
+  //   path: '/admin/users', 
+  //   label: 'List Users', 
+  //   icon: Users,
+  //   description: 'Kelola pengguna sistem',
+  //   color: 'bg-warning/10 text-warning'
+  // },
   { 
     path: '/admin/kejadian-lainnya', 
     label: 'Kejadian Lainnya', 
@@ -68,11 +68,11 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Selamat datang di SecureDash - Sistem Pemantauan Keamanan</p>
+          <p className="text-muted-foreground">Selamat datang di Sistem Monitoring Kriminalitas IMIP</p>
         </div>
 
         {/* Main Stats */}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {/* <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <StatsCard
             title="Total Kasus Kriminal"
             value={totalCrimes}
@@ -101,7 +101,7 @@ export default function DashboardPage() {
             trend={{ value: 15, isPositive: true }}
             variant="warning"
           />
-        </div>
+        </div> */}
 
         {/* Quick Links */}
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">

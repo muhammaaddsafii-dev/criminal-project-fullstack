@@ -142,6 +142,9 @@ export function DataTable<T extends { id: string }>({
     setSelectedDeleteId(null);
   };
 
+  // Filter out 'id' column from display
+  const visibleColumns = columns.filter(column => column.key !== 'id');
+
   return (
     <>
       <div className="space-y-4 animate-fade-in">
@@ -187,7 +190,7 @@ export function DataTable<T extends { id: string }>({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
-                {columns.map((column) => (
+                {visibleColumns.map((column) => (
                   <TableHead key={String(column.key)} className="font-semibold text-foreground">
                     {column.label}
                   </TableHead>
@@ -197,7 +200,7 @@ export function DataTable<T extends { id: string }>({
             <TableBody>
               {paginatedData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={visibleColumns.length} className="h-24 text-center text-muted-foreground">
                     Tidak ada data ditemukan
                   </TableCell>
                 </TableRow>
@@ -208,7 +211,7 @@ export function DataTable<T extends { id: string }>({
                     className="transition-colors hover:bg-muted/30"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    {columns.map((column) => (
+                    {visibleColumns.map((column) => (
                       <TableCell key={String(column.key)}>
                         {column.key === 'actions' ? (
                           <div className="flex items-center gap-1">

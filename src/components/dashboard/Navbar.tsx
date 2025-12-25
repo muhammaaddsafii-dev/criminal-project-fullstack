@@ -2,6 +2,7 @@
 
 import { Bell, Sun, Moon, LogOut, User, Menu } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';  // ← TAMBAHKAN INI
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,6 +19,13 @@ interface NavbarProps {
 
 export function Navbar({ sidebarCollapsed, onMobileMenuToggle }: NavbarProps) {
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();  // ← TAMBAHKAN INI
+
+  const handleLogout = () => {
+    if (confirm('Yakin ingin keluar?')) {
+      logout();
+    }
+  };
 
   return (
     <header
@@ -70,15 +78,34 @@ export function Navbar({ sidebarCollapsed, onMobileMenuToggle }: NavbarProps) {
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
                   <User className="h-4 w-4" />
                 </div>
-                <span className="hidden sm:block text-sm font-medium">Admin</span>
+                {/* ← GANTI static "Admin" dengan data user */}
+                <span className="hidden sm:block text-sm font-medium">
+                  {user?.name || user?.username || 'User'}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              {/* User Info */}
+              <div className="px-2 py-1.5 text-sm text-muted-foreground border-b border-border mb-1">
+                <p className="font-medium text-foreground">{user?.name}</p>
+                <p className="text-xs">{user?.email}</p>
+                <p className="text-xs capitalize mt-0.5">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                    {user?.jabatan}
+                  </span>
+                </p>
+              </div>
+              
               <DropdownMenuItem className="cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
                 Profil
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
+              
+              {/* ← TAMBAHKAN onClick untuk logout */}
+              <DropdownMenuItem 
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={handleLogout}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Keluar
               </DropdownMenuItem>
