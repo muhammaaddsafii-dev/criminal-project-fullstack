@@ -569,7 +569,7 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
           {/* Upload Photos */}
           <div className="space-y-2">
             <Label htmlFor="photos" className="text-sm font-semibold">
-              Foto Kejadian (Opsional)
+              Foto Kejadian
             </Label>
             <div className="flex items-center gap-2">
               <Input

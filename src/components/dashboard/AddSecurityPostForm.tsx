@@ -304,7 +304,7 @@ export function AddSecurityPostForm({ onAdd }: AddSecurityPostFormProps) {
           {/* Upload Photos */}
           <div className="space-y-2">
             <Label htmlFor="photos" className="text-sm font-semibold">
-              Foto Pos Keamanan (Opsional)
+              Foto Pos Keamanan
             </Label>
             <div className="flex items-center gap-2">
               <Input

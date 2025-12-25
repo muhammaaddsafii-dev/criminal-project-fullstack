@@ -326,7 +326,7 @@ export function EditCCTVForm({ data, open, onOpenChange, onUpdate }: EditCCTVFor
 
           {/* URL CCTV */}
           <div className="space-y-2">
-            <Label htmlFor="url_cctv">URL CCTV (Opsional)</Label>
+            <Label htmlFor="url_cctv">URL CCTV</Label>
             <Input
               id="url_cctv"
               type="url"

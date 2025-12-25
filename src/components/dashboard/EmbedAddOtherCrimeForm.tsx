@@ -322,7 +322,7 @@ export function AddOtherCrimeForm({ onAdd }: AddOtherCrimeFormProps) {
           />
 
           <div className="space-y-2">
-            <Label>Foto (Opsional)</Label>
+            <Label>Foto</Label>
             <div className="flex items-center gap-2">
               <Button
                 type="button"

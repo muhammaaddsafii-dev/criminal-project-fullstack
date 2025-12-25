@@ -29,7 +29,7 @@ const menuItems = [
   { path: '/admin/kejadian-lainnya', label: 'Kejadian Lainnya', icon: ClipboardPlus },
   { path: '/admin/kecamatan', label: 'Kecamatan', icon: Landmark },
   { path: '/admin/desa', label: 'Desa', icon: House },
-  { path: '/admin/users', label: 'List Users', icon: Users },
+  // { path: '/admin/users', label: 'List Users', icon: Users },
 ];
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
@@ -55,7 +55,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Shield className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-foreground">SecureDash</span>
+            <span className="font-semibold text-foreground">Dashboard</span>
           </div>
         )}
       </div>
