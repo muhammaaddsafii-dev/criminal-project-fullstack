@@ -197,7 +197,7 @@ const CrimeMarkersLayer = ({ crimes, isVisible }: { crimes: any[], isVisible: bo
     if (!isVisible || crimes.length === 0) return;
 
     // Buat cluster baru
-    clusterRef.current = new MarkerClusterGroup({
+    const clusterGroup = new MarkerClusterGroup({
       showCoverageOnHover: true,
       zoomToBoundsOnClick: true,
       spiderfyOnMaxZoom: true,
@@ -253,18 +253,22 @@ const CrimeMarkersLayer = ({ crimes, isVisible }: { crimes: any[], isVisible: bo
         `;
 
         marker.bindPopup(popupContent);
-        if (clusterRef.current) {
-          clusterRef.current.addLayer(marker);
-        }
+        clusterGroup.addLayer(marker);
       }
     });
 
-    map.addLayer(clusterRef.current);
+
+    // Assign ke ref setelah semua marker ditambahkan
+
+    clusterRef.current = clusterGroup;
+
+    map.addLayer(clusterGroup);
 
     return () => {
       if (clusterRef.current && map) {
         map.removeLayer(clusterRef.current);
         clusterRef.current.clearLayers();
+        clusterRef.current = null;
       }
     };
   }, [map, crimes, isVisible]);
@@ -288,7 +292,7 @@ const SecurityPostMarkersLayer = ({ posts, isVisible }: { posts: any[], isVisibl
 
     if (!isVisible || posts.length === 0) return;
 
-    clusterRef.current = new MarkerClusterGroup({
+    const clusterGroup = new MarkerClusterGroup({
       showCoverageOnHover: true,
       zoomToBoundsOnClick: true,
       spiderfyOnMaxZoom: true,
@@ -341,18 +345,22 @@ const SecurityPostMarkersLayer = ({ posts, isVisible }: { posts: any[], isVisibl
         `;
 
         marker.bindPopup(popupContent);
-        if (clusterRef.current) {
-          clusterRef.current.addLayer(marker);
-        }
+        clusterGroup.addLayer(marker);
       }
     });
 
-    map.addLayer(clusterRef.current);
+
+    // Assign ke ref setelah semua marker ditambahkan
+
+    clusterRef.current = clusterGroup;
+
+    map.addLayer(clusterGroup);
 
     return () => {
       if (clusterRef.current && map) {
         map.removeLayer(clusterRef.current);
         clusterRef.current.clearLayers();
+        clusterRef.current = null;
       }
     };
   }, [map, posts, isVisible]);
@@ -376,7 +384,7 @@ const CCTVMarkersLayer = ({ cctvs, isVisible }: { cctvs: any[], isVisible: boole
 
     if (!isVisible || cctvs.length === 0) return;
 
-    clusterRef.current = new MarkerClusterGroup({
+    const clusterGroup = new MarkerClusterGroup({
       showCoverageOnHover: true,
       zoomToBoundsOnClick: true,
       spiderfyOnMaxZoom: true,
@@ -415,9 +423,17 @@ const CCTVMarkersLayer = ({ cctvs, isVisible }: { cctvs: any[], isVisible: boole
             <div style="font-weight: 600; font-size: 14px; color: #1e293b; margin-bottom: 8px;">
               📹 ${cctv.name}
             </div>
-            ${cctv.address ? `
+            ${cctv.url_cctv ? `
               <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">
-                📍 ${cctv.address}
+                URL:  
+                <a 
+                  href="${cctv.url_cctv}" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style="color: #2563eb; text-decoration: underline;"
+                >
+                  ${cctv.url_cctv}
+                </a>
               </div>
             ` : ''}
             ${cctv.description ? `
@@ -429,18 +445,22 @@ const CCTVMarkersLayer = ({ cctvs, isVisible }: { cctvs: any[], isVisible: boole
         `;
 
         marker.bindPopup(popupContent);
-        if (clusterRef.current) {
-          clusterRef.current.addLayer(marker);
-        }
+        clusterGroup.addLayer(marker);
       }
     });
 
-    map.addLayer(clusterRef.current);
+
+    // Assign ke ref setelah semua marker ditambahkan
+
+    clusterRef.current = clusterGroup;
+
+    map.addLayer(clusterGroup);
 
     return () => {
       if (clusterRef.current && map) {
         map.removeLayer(clusterRef.current);
         clusterRef.current.clearLayers();
+        clusterRef.current = null;
       }
     };
   }, [map, cctvs, isVisible]);

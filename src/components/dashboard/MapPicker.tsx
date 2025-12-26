@@ -24,7 +24,7 @@ interface AreaClassification {
 
 export function MapPicker({ value, onChange }: MapPickerProps) {
   const [position, setPosition] = useState(
-    value || { lat: -2.5450, lng: 121.9695 } // Morowali
+    value || { lat: -2.860063, lng: 122.164536 } // Morowali -2.860063, 122.164536
   );
 
   const [address, setAddress] = useState('');
@@ -209,8 +209,8 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
 
     // Initialize map
     const map = L.map(mapRef.current).setView(
-      [-2.5450, 121.9695], // Morowali
-      10
+      [-2.860063, 122.164536], // Morowali
+      9
     );
 
     // Add OpenStreetMap tiles
@@ -220,7 +220,7 @@ export function MapPicker({ value, onChange }: MapPickerProps) {
     }).addTo(map);
 
     // Add marker
-    const marker = L.marker([-2.5450, 121.9695], {
+    const marker = L.marker([-2.860063, 122.164536], { //
       draggable: true,
     }).addTo(map);
 

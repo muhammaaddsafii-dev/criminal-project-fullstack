@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { X, Plus, AlertCircle, Upload, Trash2 } from 'lucide-react';
+import { X, ShieldAlert, AlertCircle, Upload, Trash2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -290,9 +290,10 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Kriminalitas
+        <Button className="gap-1 sm:gap-1.5 md:gap-2 px-2 py-1.5 sm:px-3 sm:py-1.5 md:px-4 md:py-2 text-[10px] sm:text-xs md:text-sm whitespace-nowrap">
+          <ShieldAlert className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+          <span className="hidden xs:inline sm:hidden">Crime</span>
+          <span className="hidden sm:inline">Kriminalitas</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -639,7 +640,7 @@ export function AddCrimeForm({ onAdd }: AddCrimeFormProps) {
               Batal
             </Button>
             <Button type="submit" className="gap-2" disabled={loading}>
-              <Plus className="h-4 w-4" />
+              <Save className="h-4 w-4" />
               {loading ? 'Menyimpan...' : 'Simpan Data'}
             </Button>
           </DialogFooter>
