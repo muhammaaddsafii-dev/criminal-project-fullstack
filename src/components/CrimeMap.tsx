@@ -178,6 +178,36 @@ const Legend = () => {
   return null;
 };
 
+// Komponen Custom Map Controls (Zoom + Layers)
+const CustomMapControls = ({ 
+  showCrimes, 
+  setShowCrimes, 
+  showSecurity, 
+  setShowSecurity, 
+  showCCTV, 
+  setShowCCTV 
+}: {
+  showCrimes: boolean;
+  setShowCrimes: (show: boolean) => void;
+  showSecurity: boolean;
+  setShowSecurity: (show: boolean) => void;
+  showCCTV: boolean;
+  setShowCCTV: (show: boolean) => void;
+}) => {
+  const map = useMap();
+  const [isLayerOpen, setIsLayerOpen] = useState(false);
+
+  const handleZoomIn = () => {
+    map.zoomIn();
+  };
+
+  const handleZoomOut = () => {
+    map.zoomOut();
+  };
+
+  return null; // Render via React portal di parent component
+};
+
 // Komponen untuk Crime Markers dengan clustering - DIBUAT CONTROLLED
 const CrimeMarkersLayer = ({ crimes, isVisible }: { crimes: any[], isVisible: boolean }) => {
   const map = useMap();
@@ -292,6 +322,193 @@ const SecurityPostMarkersLayer = ({ posts, isVisible }: { posts: any[], isVisibl
 
     if (!isVisible || posts.length === 0) return;
 
+    // Inject fullscreen gallery function to window
+    if (typeof window !== 'undefined') {
+      (window as any).openFullscreenGallery = (photos: string[], startIndex: number, title: string) => {
+        let currentIndex = startIndex;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'fullscreen-image-overlay';
+        overlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.95);
+          z-index: 10000;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        `;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '✕';
+        closeBtn.style.cssText = `
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          font-size: 24px;
+          cursor: pointer;
+          z-index: 10001;
+          transition: background 0.2s;
+        `;
+        closeBtn.onmouseenter = () => { closeBtn.style.background = 'rgba(255, 255, 255, 0.3)'; };
+        closeBtn.onmouseleave = () => { closeBtn.style.background = 'rgba(255, 255, 255, 0.2)'; };
+        closeBtn.onclick = (e) => {
+          e.stopPropagation();
+          document.body.removeChild(overlay);
+        };
+
+        const titleDiv = document.createElement('div');
+        titleDiv.textContent = title;
+        titleDiv.style.cssText = `
+          position: absolute;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          color: white;
+          font-size: 18px;
+          font-weight: 600;
+          z-index: 10001;
+        `;
+
+        const counterDiv = document.createElement('div');
+        counterDiv.style.cssText = `
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 14px;
+          z-index: 10001;
+        `;
+
+        const imgContainer = document.createElement('div');
+        imgContainer.style.cssText = `
+          position: relative;
+          max-width: 90vw;
+          max-height: 90vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `;
+
+        const img = document.createElement('img');
+        img.style.cssText = `
+          max-width: 100%;
+          max-height: 90vh;
+          object-fit: contain;
+          border-radius: 8px;
+        `;
+
+        const updateImage = () => {
+          img.src = photos[currentIndex];
+          counterDiv.textContent = (currentIndex + 1) + ' / ' + photos.length;
+        };
+
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '‹';
+        prevBtn.style.cssText = `
+          position: absolute;
+          left: -60px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          font-size: 30px;
+          cursor: pointer;
+          z-index: 10001;
+          display: ` + (photos.length > 1 ? 'flex' : 'none') + `;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s;
+        `;
+        prevBtn.onmouseenter = () => { prevBtn.style.background = 'rgba(255, 255, 255, 0.3)'; };
+        prevBtn.onmouseleave = () => { prevBtn.style.background = 'rgba(255, 255, 255, 0.2)'; };
+        prevBtn.onclick = (e) => {
+          e.stopPropagation();
+          currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+          updateImage();
+        };
+
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '›';
+        nextBtn.style.cssText = `
+          position: absolute;
+          right: -60px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          font-size: 30px;
+          cursor: pointer;
+          z-index: 10001;
+          display: ` + (photos.length > 1 ? 'flex' : 'none') + `;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s;
+        `;
+        nextBtn.onmouseenter = () => { nextBtn.style.background = 'rgba(255, 255, 255, 0.3)'; };
+        nextBtn.onmouseleave = () => { nextBtn.style.background = 'rgba(255, 255, 255, 0.2)'; };
+        nextBtn.onclick = (e) => {
+          e.stopPropagation();
+          currentIndex = (currentIndex + 1) % photos.length;
+          updateImage();
+        };
+
+        const handleKeyboard = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') {
+            document.body.removeChild(overlay);
+            document.removeEventListener('keydown', handleKeyboard);
+          } else if (e.key === 'ArrowLeft' && photos.length > 1) {
+            currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+            updateImage();
+          } else if (e.key === 'ArrowRight' && photos.length > 1) {
+            currentIndex = (currentIndex + 1) % photos.length;
+            updateImage();
+          }
+        };
+        document.addEventListener('keydown', handleKeyboard);
+
+        overlay.onclick = () => {
+          document.body.removeChild(overlay);
+          document.removeEventListener('keydown', handleKeyboard);
+        };
+
+        imgContainer.onclick = (e) => { e.stopPropagation(); };
+
+        imgContainer.appendChild(prevBtn);
+        imgContainer.appendChild(img);
+        imgContainer.appendChild(nextBtn);
+        overlay.appendChild(closeBtn);
+        overlay.appendChild(titleDiv);
+        overlay.appendChild(imgContainer);
+        overlay.appendChild(counterDiv);
+        document.body.appendChild(overlay);
+
+        updateImage();
+      };
+    }
+
     const clusterGroup = new MarkerClusterGroup({
       showCoverageOnHover: true,
       zoomToBoundsOnClick: true,
@@ -326,8 +543,49 @@ const SecurityPostMarkersLayer = ({ posts, isVisible }: { posts: any[], isVisibl
           icon: securityIcon,
         });
 
+        // API /map/data/ menggunakan field: name, address, description, photos (array of URLs)
+        const hasPhotos = post.photos && Array.isArray(post.photos) && post.photos.length > 0;
+
+        let photoHtml = '';
+        if (hasPhotos) {
+          const photoId = `photo-slider-${post.id}`;
+          
+          photoHtml = `
+            <div style="margin-top: 8px;">
+              <div id="${photoId}" style="position: relative; width: 100%; aspect-ratio: 16/9; background: #f1f5f9; border-radius: 8px; overflow: hidden;">
+                <img 
+                  id="${photoId}-img"
+                  src="${post.photos[0]}" 
+                  alt="Security Post Photo"
+                  style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                  onclick="openFullscreenGallery(${JSON.stringify(post.photos).replace(/"/g, '&quot;')}, parseInt(document.getElementById('${photoId}-img').dataset.index || '0'), '${post.name.replace(/'/g, "\\'")}')"
+                  onerror="this.style.display='none'"
+                  data-index="0"
+                />
+                ${post.photos.length > 1 ? `
+                  <button 
+                    id="${photoId}-prev"
+                    style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 4px; width: 32px; height: 32px; cursor: pointer; font-size: 20px; font-weight: bold; display: flex; align-items: center; justify-content: center;"
+                  >‹</button>
+                  <button 
+                    id="${photoId}-next"
+                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 4px; width: 32px; height: 32px; cursor: pointer; font-size: 20px; font-weight: bold; display: flex; align-items: center; justify-content: center;"
+                  >›</button>
+                  <div 
+                    id="${photoId}-counter"
+                    style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px;"
+                  >1 / ${post.photos.length}</div>
+                ` : ''}
+              </div>
+              <div style="text-align: center; margin-top: 4px;">
+                <small style="color: #64748b; font-size: 10px;">Click photo to view fullscreen</small>
+              </div>
+            </div>
+          `;
+        }
+
         const popupContent = `
-          <div style="min-width: 200px; font-family: system-ui;">
+          <div style="min-width: 220px; font-family: system-ui;">
             <div style="font-weight: 600; font-size: 14px; color: #1e293b; margin-bottom: 8px;">
               🛡️ ${post.name}
             </div>
@@ -337,14 +595,59 @@ const SecurityPostMarkersLayer = ({ posts, isVisible }: { posts: any[], isVisibl
               </div>
             ` : ''}
             ${post.description ? `
-              <div style="font-size: 12px; color: #64748b;">
+              <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">
                 ${post.description}
               </div>
             ` : ''}
+            ${photoHtml}
           </div>
         `;
 
-        marker.bindPopup(popupContent);
+        const popup = L.popup({ maxWidth: 300 }).setContent(popupContent);
+        marker.bindPopup(popup);
+
+        // Add slider event listeners after popup opens
+        if (hasPhotos && post.photos.length > 1) {
+          marker.on('popupopen', () => {
+            let currentIndex = 0;
+            const photos = post.photos;
+            const photoId = `photo-slider-${post.id}`;
+
+            const updatePhoto = (newIndex: number) => {
+              currentIndex = newIndex;
+              const imgEl = document.getElementById(`${photoId}-img`) as HTMLImageElement;
+              const counterEl = document.getElementById(`${photoId}-counter`);
+
+              if (imgEl && photos[currentIndex]) {
+                imgEl.src = photos[currentIndex];
+                imgEl.dataset.index = currentIndex.toString();
+              }
+              if (counterEl) {
+                counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
+              }
+            };
+
+            const prevBtn = document.getElementById(`${photoId}-prev`);
+            const nextBtn = document.getElementById(`${photoId}-next`);
+
+            if (prevBtn) {
+              prevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const newIndex = (currentIndex - 1 + photos.length) % photos.length;
+                updatePhoto(newIndex);
+              });
+            }
+
+            if (nextBtn) {
+              nextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const newIndex = (currentIndex + 1) % photos.length;
+                updatePhoto(newIndex);
+              });
+            }
+          });
+        }
+
         clusterGroup.addLayer(marker);
       }
     });
@@ -482,6 +785,7 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
   const [showCrimes, setShowCrimes] = useState(true);
   const [showSecurity, setShowSecurity] = useState(true);
   const [showCCTV, setShowCCTV] = useState(true);
+  const [isLayerControlOpen, setIsLayerControlOpen] = useState(false);
 
   // ========== TAMBAHAN: State untuk klasifikasi area ==========
   const [areaClassifications, setAreaClassifications] = useState<Map<number, AreaClassification>>(new Map());
@@ -648,7 +952,7 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
         center={[-2.929941, 122.073775]}
         zoom={11}
         className="w-full h-full"
-        zoomControl={true}
+        zoomControl={false}
         style={{ background: "#e2e8f0" }}
       >
         {/* Base Layer */}
@@ -685,48 +989,94 @@ const CrimeMap: React.FC<CrimeMapProps> = ({
         <Legend />
       </MapContainer>
 
-      {/* Layer Control Manual */}
-      <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg z-[1] p-3">
-        <div className="text-xs font-semibold text-slate-700 mb-2">Layer Peta</div>
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showCrimes}
-              onChange={(e) => setShowCrimes(e.target.checked)}
-              className="w-4 h-4 text-red-600 rounded focus:ring-2 focus:ring-red-500"
-            />
-            <span className="text-xs text-slate-600 flex items-center gap-1">
-              <span className="w-3 h-3 bg-red-600 rounded-full inline-block"></span>
-              Laporan Kejahatan
-            </span>
-          </label>
-          
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showSecurity}
-              onChange={(e) => setShowSecurity(e.target.checked)}
-              className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500"
-            />
-            <span className="text-xs text-slate-600 flex items-center gap-1">
-              <span className="w-3 h-3 bg-green-600 rounded-full inline-block"></span>
-              Pos Keamanan
-            </span>
-          </label>
-          
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showCCTV}
-              onChange={(e) => setShowCCTV(e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-            />
-            <span className="text-xs text-slate-600 flex items-center gap-1">
-              <span className="w-3 h-3 bg-blue-600 rounded-full inline-block"></span>
-              CCTV
-            </span>
-          </label>
+      {/* Custom Zoom + Layer Control - Gabungan */}
+      <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg z-[1000] w-[34px]">
+        {/* Zoom In Button */}
+        <button
+          onClick={() => {
+            const map = (document.querySelector('.leaflet-container') as any)?._leafletMap;
+            if (map) map.zoomIn();
+          }}
+          className="w-full h-[34px] flex items-center justify-center hover:bg-slate-50 transition-colors border-b border-slate-200"
+          title="Zoom in"
+        >
+          <span className="text-lg font-semibold text-slate-700">+</span>
+        </button>
+
+        {/* Zoom Out Button */}
+        <button
+          onClick={() => {
+            const map = (document.querySelector('.leaflet-container') as any)?._leafletMap;
+            if (map) map.zoomOut();
+          }}
+          className="w-full h-[34px] flex items-center justify-center hover:bg-slate-50 transition-colors border-b border-slate-200"
+          title="Zoom out"
+        >
+          <span className="text-lg font-semibold text-slate-700">−</span>
+        </button>
+
+        {/* Layer Control Button */}
+        <button
+          onClick={() => setIsLayerControlOpen(!isLayerControlOpen)}
+          className="w-full h-[34px] flex items-center justify-center hover:bg-slate-50 transition-colors rounded-b-lg"
+          title="Layer Peta"
+        >
+          <svg 
+            className={`w-5 h-5 text-slate-700 transition-transform duration-200 ${isLayerControlOpen ? 'rotate-180' : ''}`}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+        </button>
+        
+        {/* Layer Control Content */}
+        <div 
+          className={`absolute top-0 left-[42px] bg-white/95 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out ${
+            isLayerControlOpen ? 'w-auto opacity-100' : 'w-0 opacity-0'
+          }`}
+        >
+          <div className="px-3 py-3 space-y-2 w-max">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={showCrimes}
+                onChange={(e) => setShowCrimes(e.target.checked)}
+                className="w-4 h-4 text-red-600 rounded focus:ring-2 focus:ring-red-500"
+              />
+              <span className="text-xs text-slate-600 flex items-center gap-1.5 group-hover:text-slate-800 transition-colors whitespace-nowrap">
+                <span className="w-3 h-3 bg-red-600 rounded-full inline-block shadow-sm"></span>
+                Laporan Kejahatan
+              </span>
+            </label>
+            
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={showSecurity}
+                onChange={(e) => setShowSecurity(e.target.checked)}
+                className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500"
+              />
+              <span className="text-xs text-slate-600 flex items-center gap-1.5 group-hover:text-slate-800 transition-colors whitespace-nowrap">
+                <span className="w-3 h-3 bg-green-600 rounded-full inline-block shadow-sm"></span>
+                Pos Keamanan
+              </span>
+            </label>
+            
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={showCCTV}
+                onChange={(e) => setShowCCTV(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-xs text-slate-600 flex items-center gap-1.5 group-hover:text-slate-800 transition-colors whitespace-nowrap">
+                <span className="w-3 h-3 bg-blue-600 rounded-full inline-block shadow-sm"></span>
+                CCTV
+              </span>
+            </label>
+          </div>
         </div>
       </div>
 
