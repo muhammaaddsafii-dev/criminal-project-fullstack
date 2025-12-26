@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Eye, Pencil, Trash2, FileSpreadsheet, Map, FolderArchive, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +38,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { downloadExcel, downloadGeoJSON, downloadShapefile } from '@/lib/api/download';
 
 interface Column<T> {
   key: keyof T | 'actions';
@@ -72,15 +79,16 @@ export function DataTable<T extends { id: string }>({
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  
+  const [downloading, setDownloading] = useState<{ id: string; format: string } | null>(null);
+
   // View dialog state
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedViewItem, setSelectedViewItem] = useState<T | null>(null);
-  
+
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedEditItem, setSelectedEditItem] = useState<T | null>(null);
-  
+
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
@@ -142,6 +150,41 @@ export function DataTable<T extends { id: string }>({
     setSelectedDeleteId(null);
   };
 
+  const handleDownload = async (id: string, format: 'excel' | 'geojson' | 'shapefile') => {
+    try {
+      setDownloading({ id, format });
+
+      // Extract numeric ID from KRMxxx format
+      const numericId = parseInt(id.replace('KRM', ''));
+      console.log('Downloading format:', format, 'for ID:', numericId);
+
+      // Use ID directly instead of search
+      const filters = { id: numericId };
+
+      let result;
+      switch (format) {
+        case 'excel':
+          result = await downloadExcel(filters);
+          break;
+        case 'geojson':
+          result = await downloadGeoJSON(filters);
+          break;
+        case 'shapefile':
+          result = await downloadShapefile(filters);
+          break;
+      }
+
+      if (result.success) {
+        console.log(`Successfully downloaded ${format} for ID ${numericId}`);
+      }
+    } catch (error: any) {
+      console.error('Download error:', error);
+      alert(`Gagal mengunduh file: ${error.message}`);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   // Filter out 'id' column from display
   const visibleColumns = columns.filter(column => column.key !== 'id');
 
@@ -150,18 +193,6 @@ export function DataTable<T extends { id: string }>({
       <div className="space-y-4 animate-fade-in">
         {/* Search and Filter */}
         <div className="flex flex-col sm:flex-row gap-3">
-          {/* <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Cari..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10"
-            />
-          </div> */}
           {filterKey && filterOptions.length > 0 && (
             <Select
               value={filter}
@@ -191,7 +222,7 @@ export function DataTable<T extends { id: string }>({
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 {visibleColumns.map((column) => (
-                  <TableHead key={String(column.key)} className="font-semibold text-foreground">
+                  <TableHead key={String(column.key)} className="font-semibold text-foreground text-center">
                     {column.label}
                   </TableHead>
                 ))}
@@ -208,40 +239,137 @@ export function DataTable<T extends { id: string }>({
                 paginatedData.map((item, index) => (
                   <TableRow
                     key={item.id}
-                    className="transition-colors hover:bg-muted/30"
+                    className="transition-colors hover:bg-muted/30 text-center"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     {visibleColumns.map((column) => (
                       <TableCell key={String(column.key)}>
                         {column.key === 'actions' ? (
-                          <div className="flex items-center gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 hover:bg-info/10 hover:text-info"
-                              onClick={() => handleView(item)}
-                              title="Lihat Detail"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 hover:bg-warning/10 hover:text-warning"
-                              onClick={() => handleEdit(item)}
-                              title="Edit"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() => handleDeleteClick(item.id)}
-                              title="Hapus"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          <div className="items-center gap-1">
+                            {/* View Button */}
+                            <TooltipProvider>
+                              {/* Download Excel */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-green-50 hover:text-green-600"
+                                    onClick={() => handleDownload(item.id, 'excel')}
+                                    disabled={downloading !== null}
+                                    title="Download Excel"
+                                  >
+                                    {downloading?.id === item.id && downloading?.format === 'excel' ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <FileSpreadsheet className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Download Excel</p>
+                                </TooltipContent>
+                              </Tooltip>
+
+                              {/* Download GeoJSON */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
+                                    onClick={() => handleDownload(item.id, 'geojson')}
+                                    disabled={downloading !== null}
+                                    title="Download GeoJSON"
+                                  >
+                                    {downloading?.id === item.id && downloading?.format === 'geojson' ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Map className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Download GeoJSON</p>
+                                </TooltipContent>
+                              </Tooltip>
+
+                              {/* Download Shapefile
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 hover:bg-purple-50 hover:text-purple-600"
+                                    onClick={() => handleDownload(item.id, 'shapefile')}
+                                    disabled={downloading !== null}
+                                    title="Download Shapefile"
+                                  >
+                                    {downloading?.id === item.id && downloading?.format === 'shapefile' ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <FolderArchive className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Download Shapefile (ZIP)</p>
+                                </TooltipContent>
+                              </Tooltip> */}
+
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-info/10 hover:text-info"
+                                    onClick={() => handleView(item)}
+                                    title="Lihat Detail"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Lihat Detail</p>
+                                </TooltipContent>
+                              </Tooltip>
+
+                              {/* Edit Button */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-warning/10 hover:text-warning"
+                                    onClick={() => handleEdit(item)}
+                                    title="Edit"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit</p>
+                                </TooltipContent>
+                              </Tooltip>
+
+                              {/* Delete Button */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                                    onClick={() => handleDeleteClick(item.id)}
+                                    title="Hapus"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Hapus</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                         ) : column.render ? (
                           column.render(item)
@@ -313,75 +441,6 @@ export function DataTable<T extends { id: string }>({
           </div>
         )}
       </div>
-
-      {/* View Dialog */}
-      {/* <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detail Data</DialogTitle>
-            <DialogDescription>
-              Informasi lengkap dari data yang dipilih
-            </DialogDescription>
-          </DialogHeader>
-          {selectedViewItem && (
-            <div className="space-y-4">
-              {Object.entries(selectedViewItem).map(([key, value]) => (
-                <div key={key} className="grid grid-cols-3 gap-4 py-2 border-b border-border last:border-0">
-                  <div className="font-semibold text-foreground capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}:
-                  </div>
-                  <div className="col-span-2 text-muted-foreground">
-                    {String(value)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setViewDialogOpen(false)}>Tutup</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog> */}
-
-      {/* Edit Dialog */}
-      {/* <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Data</DialogTitle>
-            <DialogDescription>
-              Ubah informasi data yang dipilih (Demo - Perubahan tidak akan tersimpan)
-            </DialogDescription>
-          </DialogHeader>
-          {selectedEditItem && (
-            <div className="space-y-4">
-              {Object.entries(selectedEditItem).map(([key, value]) => (
-                <div key={key} className="space-y-2">
-                  <label className="text-sm font-medium text-foreground capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </label>
-                  <Input
-                    defaultValue={String(value)}
-                    disabled={key === 'id'}
-                    className={key === 'id' ? 'bg-muted' : ''}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              Batal
-            </Button>
-            <Button onClick={() => {
-              // Di sini nanti bisa tambahkan logic untuk save
-              alert('Data berhasil diubah! (Demo - tidak tersimpan ke database)');
-              setEditDialogOpen(false);
-            }}>
-              Simpan Perubahan
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog> */}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
